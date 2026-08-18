@@ -7,7 +7,7 @@ services:
         NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY}
     restart: unless-stopped
     ports:
-      - "3000:3000"
+       - "3000"
     environment:
       NODE_ENV: production
       DATABASE_PATH: /app/data/prcs-it.db
