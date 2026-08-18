@@ -1,0 +1,1 @@
+ALTER TABLE `assets` ADD `responsible` text DEFAULT '' NOT NULL;

@@ -1,0 +1,55 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1786960465000,
+      "tag": "0000_young_network",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1786983560250,
+      "tag": "0001_high_exiles",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1786987114509,
+      "tag": "0002_mature_warstar",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1787034175552,
+      "tag": "0003_fast_quasimodo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1787035639237,
+      "tag": "0004_hard_prima",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1787037325968,
+      "tag": "0005_sticky_apocalypse",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1787044808229,
+      "tag": "0006_thin_obadiah_stane",
+      "breakpoints": true
+    }
+  ]
+}
