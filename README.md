@@ -15,8 +15,11 @@
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
+SUPABASE_SECRET_KEY=YOUR_SERVER_SECRET_KEY
 DATABASE_PATH=/app/data/prcs-it.db
 ```
+
+`SUPABASE_SECRET_KEY` متغير سري للخادم فقط، ويُستخدم ليتمكن مدير النظام من إنشاء حسابات مؤكدة وجاهزة للدخول. لا تضعه في GitHub، ولا تسمّه باسم يبدأ بـ`NEXT_PUBLIC_`، ولا تفعّل له Buildtime.
 
 ## إعداد Coolify
 

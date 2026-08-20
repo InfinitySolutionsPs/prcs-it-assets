@@ -1,6 +1,6 @@
 "use client";
 import {FormEvent,useEffect,useState} from "react";
-import {apiFetch,signupClient} from "../lib/supabase-client";
+import {apiFetch} from "../lib/supabase-client";
 
 type User={id:number;email:string;fullName:string;role:string;permissions:string[];active:boolean;createdAt:string};
 const permissions=[['dashboard','نظرة عامة'],['assets','الأصول والعهد'],['movements','التسليم والنقل'],['maintenance','الصيانة'],['inventory','الجرد'],['stock','المخزون'],['reports','التقارير'],['setup','التعريفات الأساسية'],['users','المستخدمون والصلاحيات']];
@@ -16,8 +16,7 @@ export default function UsersScreen(){
   try{
    if(editing){const r=await apiFetch('/api/users',{method:'PATCH',headers:{'content-type':'application/json'},body:JSON.stringify({id:editing.id,fullName,role:f.get('role'),permissions:selected,active:f.get('active')==='on'})}),d=await r.json();if(!r.ok)throw new Error(d.error);setUsers(v=>v.map(x=>x.id===d.user.id?d.user:x));setEditing(null);setMsg('تم تحديث المستخدم والصلاحيات بنجاح');return}
    const password=String(f.get('password')||''),confirmPassword=String(f.get('confirmPassword')||'');if(password.length<8)throw new Error('كلمة المرور يجب أن تكون 8 أحرف على الأقل');if(password!==confirmPassword)throw new Error('كلمتا المرور غير متطابقتين');
-   const{error:authError}=await signupClient.auth.signUp({email,password,options:{emailRedirectTo:location.origin,data:{full_name:fullName}}});if(authError)throw new Error(authError.message.includes('already')?'البريد الإلكتروني مرتبط بحساب مسبقاً':'تعذر إنشاء حساب الدخول');
-   const r=await apiFetch('/api/users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({fullName,email,role:f.get('role'),permissions:selected})}),d=await r.json();if(!r.ok)throw new Error(d.error);setUsers(v=>[...v,d.user]);setCreating(false);setMsg('تم إنشاء المستخدم وإرسال رسالة تأكيد إلى بريده الإلكتروني');form.reset();
+   const r=await apiFetch('/api/users',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({fullName,email,password,role:f.get('role'),permissions:selected})}),d=await r.json();if(!r.ok)throw new Error(d.error);setUsers(v=>[...v,d.user]);setCreating(false);setMsg('تم إنشاء المستخدم وتفعيل الحساب. يمكنه تسجيل الدخول الآن بالبريد وكلمة المرور');form.reset();
   }catch(x){setMsg(x instanceof Error?x.message:'تعذر الحفظ')}finally{setSaving(false)}
  };
  const remove=async(u:User)=>{if(!confirm(`حذف المستخدم ${u.fullName}؟`))return;const r=await apiFetch('/api/users',{method:'DELETE',headers:{'content-type':'application/json'},body:JSON.stringify({id:u.id})}),d=await r.json();if(!r.ok){setMsg(d.error);return}setUsers(v=>v.filter(x=>x.id!==u.id))};
