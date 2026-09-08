@@ -1,6 +1,6 @@
 "use client";
 import {useMemo,useState} from "react";
-import {apiFetch} from "../lib/supabase-client";
+import {apiFetch} from "../lib/api-client";
 
 type Named={id:number;name:string};
 type Child=Named&{parentId:number};

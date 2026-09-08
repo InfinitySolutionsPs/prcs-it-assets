@@ -2,7 +2,9 @@
   "name": "prcs-it-assets",
   "version": "1.0.0",
   "private": true,
-  "engines": {"node": ">=22.13.0"},
+  "engines": {
+    "node": ">=22.13.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,7 +15,6 @@
   },
   "dependencies": {
     "@fontsource/ibm-plex-sans-arabic": "5.2.7",
-    "@supabase/supabase-js": "2.57.4",
     "better-sqlite3": "12.4.1",
     "drizzle-orm": "0.45.2",
     "next": "16.2.6",

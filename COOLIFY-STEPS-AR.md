@@ -15,14 +15,14 @@
 - اختر `Public Repository` أو GitHub App إذا كان الحساب مربوطًا.
 - أدخل: `https://github.com/InfinitySolutionsPs/prcs-it-assets`
 - Build Pack: اختر `Docker Compose`.
-- Compose file: `docker-compose.yml`.
+- Compose file: `docker-compose.yaml`.
 
 ## 3. المتغيرات
 
 أضف القيم الحقيقية التالية داخل Environment Variables:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+- `AUTH_SECRET` (قيمة عشوائية لا تقل عن 32 حرفًا)
+- `LOCAL_AUTH_SETUP_TOKEN` (رمز سري منفصل للتهيئة الأولى)
 - `DATABASE_PATH=/app/data/prcs-it.db`
 
 ## 4. الدومين
@@ -31,12 +31,9 @@
 - اجعل DNS للسجل `prcs-it` يشير إلى IP الخادم.
 - فعّل HTTPS من Coolify.
 
-## 5. Supabase
+## 5. تهيئة مدير النظام
 
-في Authentication → URL Configuration:
-
-- Site URL: `https://prcs-it.infinite.ps`
-- Redirect URL: `https://prcs-it.infinite.ps/**`
+بعد النشر، أدخل بريد مدير النظام الموجود في قاعدة البيانات واختر اسم دخول وكلمة مرور، ثم أدخل قيمة `LOCAL_AUTH_SETUP_TOKEN`.
 
 ## 6. النشر
 
