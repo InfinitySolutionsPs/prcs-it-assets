@@ -1,6 +1,6 @@
 "use client";
 import {FormEvent,useState} from "react";
-import {apiFetch} from "../lib/supabase-client";
+import {apiFetch} from "../lib/api-client";
 
 type Named={id:number;name:string;usefulLifeYears?:number};
 type Child=Named&{parentId:number};

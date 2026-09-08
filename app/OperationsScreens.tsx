@@ -1,6 +1,6 @@
 "use client";
 import {FormEvent,useEffect,useMemo,useState} from "react";
-import {apiFetch} from "../lib/supabase-client";
+import {apiFetch} from "../lib/api-client";
 type Named={id:number;name:string};type Child=Named&{parentId:number};
 export type Asset={id:number;code:string;product:string;category:string;facility:string;department:string;responsible:string;status:string;condition:string;serial:string;createdAt?:string};
 type Maintenance={id:number;assetId:number;assetCode:string;assetName:string;issue:string;technician:string;status:string;cost:number;notes:string;createdAt:string};

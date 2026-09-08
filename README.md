@@ -1,10 +1,13 @@
 # PRCS IT Assets
 
+## Local authentication environment variables
+
+Set `AUTH_SECRET` to a random value of at least 32 characters. Set `LOCAL_AUTH_SETUP_TOKEN` to a separate temporary secret used only for the first administrator setup. Supabase variables are no longer required.
+
 نظام إدارة الأصول والعهد التقنية، مجهّز للنشر على Coolify باستخدام Docker.
 
 ## المتطلبات
 
-- Supabase project لتسجيل الدخول والبريد الإلكتروني.
 - Coolify مع Persistent Storage.
 - الدومين: `prcs-it.infinite.ps`.
 
@@ -13,19 +16,18 @@
 أضف في Coolify:
 
 ```env
-NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=YOUR_PUBLISHABLE_KEY
-SUPABASE_SECRET_KEY=YOUR_SERVER_SECRET_KEY
+AUTH_SECRET=RANDOM_VALUE_OF_AT_LEAST_32_CHARACTERS
+LOCAL_AUTH_SETUP_TOKEN=SEPARATE_ONE_TIME_SETUP_TOKEN
 DATABASE_PATH=/app/data/prcs-it.db
 ```
 
-`SUPABASE_SECRET_KEY` متغير سري للخادم فقط، ويُستخدم ليتمكن مدير النظام من إنشاء حسابات مؤكدة وجاهزة للدخول. لا تضعه في GitHub، ولا تسمّه باسم يبدأ بـ`NEXT_PUBLIC_`، ولا تفعّل له Buildtime.
+المتغيران سريان للخادم فقط؛ لا تضعهما في GitHub ولا تفعّل لهما Buildtime. يُستخدم `LOCAL_AUTH_SETUP_TOKEN` مرة واحدة لتجهيز بيانات دخول مدير النظام الموجود في قاعدة البيانات.
 
 ## إعداد Coolify
 
 1. أنشئ Resource جديد من مستودع GitHub.
 2. اختر Docker Compose.
-3. اختر الفرع `main` والملف `docker-compose.yml`.
+3. اختر الفرع `main` والملف `docker-compose.yaml`.
 4. أضف المتغيرات السابقة.
 5. تأكد من وجود التخزين الدائم `prcs_it_data` على `/app/data`.
 6. اربط الدومين `prcs-it.infinite.ps` بالمنفذ `3000`.
@@ -35,4 +37,4 @@ DATABASE_PATH=/app/data/prcs-it.db
 
 ## ملاحظة تسجيل الدخول
 
-أضف `https://prcs-it.infinite.ps` إلى Site URL وRedirect URLs في إعدادات Supabase Authentication.
+عند أول تشغيل بعد التحديث ستظهر شاشة تهيئة لمرة واحدة. أدخل بريد مدير النظام الموجود، واسم دخول وكلمة مرور جديدين، ورمز `LOCAL_AUTH_SETUP_TOKEN`. بعد ذلك يضيف المدير بيانات دخول المستخدمين الآخرين من شاشة إدارة المستخدمين.

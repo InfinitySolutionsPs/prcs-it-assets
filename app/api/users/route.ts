@@ -1,48 +1,9 @@
-import {asc,eq} from "drizzle-orm";import {createClient} from "@supabase/supabase-js";import {getDb} from "../../../db";import {appUsers} from "../../../db/schema";import {requirePermission} from "../../../lib/auth";
-const clean=(u:typeof appUsers.$inferSelect)=>({...u,permissions:JSON.parse(u.permissions)as string[]});
-function adminClient(){
- const url=process.env.NEXT_PUBLIC_SUPABASE_URL,secret=process.env.SUPABASE_SECRET_KEY||process.env.SUPABASE_SERVICE_ROLE_KEY;
- if(!url||!secret)throw new Error("مفتاح إدارة Supabase غير مضبوط على الخادم");
- return createClient(url,secret,{auth:{autoRefreshToken:false,persistSession:false,detectSessionInUrl:false}});
-}
+import {asc,eq} from "drizzle-orm";
+import {getDb} from "../../../db";
+import {appUsers} from "../../../db/schema";
+import {hashPassword,requirePermission} from "../../../lib/auth";
+const clean=(u:typeof appUsers.$inferSelect)=>({...u,passwordHash:undefined,permissions:JSON.parse(u.permissions)as string[]});
 export async function GET(request:Request){if(!await requirePermission(request,"users"))return Response.json({error:"غير مصرح"},{status:403});const db=await getDb();return Response.json({users:(await db.select().from(appUsers).orderBy(asc(appUsers.id))).map(clean)})}
-export async function POST(request:Request){
- const actor=await requirePermission(request,"users");
- if(!actor||actor.role!=="مدير النظام")return Response.json({error:"إضافة المستخدمين متاحة لمدير النظام فقط"},{status:403});
- try{
-  const p=await request.json()as{email?:string;password?:string;fullName?:string;role?:string;permissions?:string[]};
-  const email=p.email?.trim().toLowerCase(),fullName=p.fullName?.trim(),password=p.password||"";
-  if(!email||!fullName)return Response.json({error:"الاسم والبريد الإلكتروني مطلوبان"},{status:400});
-  if(password.length<8)return Response.json({error:"كلمة المرور يجب أن تكون 8 أحرف على الأقل"},{status:400});
-  const db=await getDb();
-  const existing=await db.select().from(appUsers).where(eq(appUsers.email,email)).limit(1);
-  if(existing.length)return Response.json({error:"البريد الإلكتروني مسجل مسبقاً في النظام"},{status:409});
-  const admin=adminClient();
-  const{data,error}=await admin.auth.admin.createUser({email,password,email_confirm:true,user_metadata:{full_name:fullName}});
-  if(error)return Response.json({error:error.message.toLowerCase().includes("already")?"البريد الإلكتروني مرتبط بحساب دخول مسبقاً":"تعذر إنشاء حساب الدخول: "+error.message},{status:409});
-  try{
-   const[user]=await db.insert(appUsers).values({email,fullName,role:p.role||"مستخدم",permissions:JSON.stringify(p.permissions||[]),active:true}).returning();
-   return Response.json({user:clean(user)},{status:201});
-  }catch(e){
-   if(data.user?.id)await admin.auth.admin.deleteUser(data.user.id);
-   throw e;
-  }
- }catch(e){return Response.json({error:e instanceof Error?e.message:"تعذر إضافة المستخدم"},{status:500})}
-}
-export async function PATCH(request:Request){if(!await requirePermission(request,"users"))return Response.json({error:"غير مصرح"},{status:403});try{const p=await request.json()as{id?:number;fullName?:string;role?:string;permissions?:string[];active?:boolean};const db=await getDb(),[user]=await db.update(appUsers).set({fullName:p.fullName?.trim(),role:p.role,permissions:JSON.stringify(p.permissions||[]),active:p.active}).where(eq(appUsers.id,Number(p.id))).returning();return Response.json({user:clean(user)})}catch(e){return Response.json({error:e instanceof Error?e.message:"تعذر تعديل المستخدم"},{status:500})}}
-export async function DELETE(request:Request){
- const actor=await requirePermission(request,"users");
- if(!actor||actor.role!=="مدير النظام")return Response.json({error:"حذف المستخدمين متاح لمدير النظام فقط"},{status:403});
- const p=await request.json()as{id?:number},id=Number(p.id);
- if(actor.id===id)return Response.json({error:"لا يمكنك حذف حسابك الحالي"},{status:409});
- const db=await getDb(),[user]=await db.select().from(appUsers).where(eq(appUsers.id,id)).limit(1);
- if(!user)return Response.json({error:"المستخدم غير موجود"},{status:404});
- try{
-  const admin=adminClient(),{data,error}=await admin.auth.admin.listUsers({page:1,perPage:1000});
-  if(error)throw error;
-  const authUser=data.users.find(x=>x.email?.toLowerCase()===user.email.toLowerCase());
-  if(authUser){const{error:deleteError}=await admin.auth.admin.deleteUser(authUser.id);if(deleteError)throw deleteError}
-  await db.delete(appUsers).where(eq(appUsers.id,id));
-  return Response.json({deleted:true});
- }catch(e){return Response.json({error:e instanceof Error?e.message:"تعذر حذف حساب المستخدم"},{status:500})}
-}
+export async function POST(request:Request){const actor=await requirePermission(request,"users");if(!actor||actor.role!=="مدير النظام")return Response.json({error:"إضافة المستخدمين متاحة لمدير النظام فقط"},{status:403});try{const p=await request.json()as{email?:string;username?:string;password?:string;fullName?:string;role?:string;permissions?:string[]},email=p.email?.trim().toLowerCase(),username=p.username?.trim().toLowerCase(),fullName=p.fullName?.trim(),password=p.password||"";if(!email||!username||!fullName)return Response.json({error:"الاسم واسم المستخدم والبريد مطلوبة"},{status:400});if(username.length<3)return Response.json({error:"اسم المستخدم يجب أن يكون 3 أحرف على الأقل"},{status:400});if(password.length<8)return Response.json({error:"كلمة المرور يجب أن تكون 8 أحرف على الأقل"},{status:400});const db=await getDb(),existingEmail=await db.select().from(appUsers).where(eq(appUsers.email,email)).limit(1),existingUsername=await db.select().from(appUsers).where(eq(appUsers.username,username)).limit(1);if(existingEmail.length)return Response.json({error:"البريد الإلكتروني مسجل مسبقًا"},{status:409});if(existingUsername.length)return Response.json({error:"اسم المستخدم مستخدم مسبقًا"},{status:409});const[user]=await db.insert(appUsers).values({email,username,passwordHash:hashPassword(password),fullName,role:p.role||"مستخدم",permissions:JSON.stringify(p.permissions||[]),active:true}).returning();return Response.json({user:clean(user)},{status:201})}catch(e){return Response.json({error:e instanceof Error?e.message:"تعذر إضافة المستخدم"},{status:500})}}
+export async function PATCH(request:Request){const actor=await requirePermission(request,"users");if(!actor)return Response.json({error:"غير مصرح"},{status:403});try{const p=await request.json()as{id?:number;username?:string;password?:string;fullName?:string;role?:string;permissions?:string[];active?:boolean},id=Number(p.id);if(p.password&&p.password.length<8)return Response.json({error:"كلمة المرور يجب أن تكون 8 أحرف على الأقل"},{status:400});const db=await getDb(),changes:{fullName?:string;username?:string;passwordHash?:string;role?:string;permissions?:string;active?:boolean}={fullName:p.fullName?.trim(),role:p.role,permissions:JSON.stringify(p.permissions||[]),active:p.active};if(p.username){const username=p.username.trim().toLowerCase();if(username.length<3)return Response.json({error:"اسم المستخدم يجب أن يكون 3 أحرف على الأقل"},{status:400});const duplicate=await db.select({id:appUsers.id}).from(appUsers).where(eq(appUsers.username,username)).limit(1);if(duplicate.length&&duplicate[0].id!==id)return Response.json({error:"اسم المستخدم مستخدم مسبقًا"},{status:409});changes.username=username}if(p.password)changes.passwordHash=hashPassword(p.password);const[user]=await db.update(appUsers).set(changes).where(eq(appUsers.id,id)).returning();return Response.json({user:clean(user)})}catch(e){return Response.json({error:e instanceof Error?e.message:"تعذر تعديل المستخدم"},{status:500})}}
+export async function DELETE(request:Request){const actor=await requirePermission(request,"users");if(!actor||actor.role!=="مدير النظام")return Response.json({error:"حذف المستخدمين متاح لمدير النظام فقط"},{status:403});const p=await request.json()as{id?:number},id=Number(p.id);if(actor.id===id)return Response.json({error:"لا يمكنك حذف حسابك الحالي"},{status:409});const db=await getDb();await db.delete(appUsers).where(eq(appUsers.id,id));return Response.json({deleted:true})}
