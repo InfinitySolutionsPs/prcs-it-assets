@@ -2,6 +2,7 @@ import {desc,eq} from "drizzle-orm";
 import {getDb} from "../../../db";
 import {assetMovements,assets,inventoryChecks,maintenanceRecords} from "../../../db/schema";
 import {currentUser,requirePermission} from "../../../lib/auth";
+import {isSystemAdminRole} from "../../../lib/roles";
 
 const toClient=(a:typeof assets.$inferSelect)=>({id:a.id,code:a.code,product:a.name,category:a.category,assetType:a.assetType,facility:a.site,department:a.custodian,responsible:a.responsible,status:a.status,condition:a.condition,serial:a.serial,createdAt:a.createdAt});
 
@@ -11,7 +12,7 @@ export async function POST(request:Request){if(!await requirePermission(request,
 
 export async function DELETE(request:Request){
  const actor=await currentUser(request);
- if(!actor||actor.role!=="مدير النظام")return Response.json({error:"حذف العهدة متاح لمدير النظام فقط"},{status:403});
+ if(!actor||!isSystemAdminRole(actor.role))return Response.json({error:"حذف العهدة متاح لمدير النظام فقط"},{status:403});
  try{
   const{id}=await request.json()as{id?:number};const assetId=Number(id);
   if(!assetId)return Response.json({error:"العهدة غير محددة"},{status:400});
