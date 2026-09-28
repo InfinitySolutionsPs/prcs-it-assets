@@ -3,7 +3,7 @@ import {eq} from "drizzle-orm";
 import {cookies} from "next/headers";
 import {getDb} from "../db";
 import {appUsers} from "../db/schema";
-export const ALL_PERMISSIONS=["dashboard","assets","movements","maintenance","inventory","stock","reports","setup","users"];
+export const ALL_PERMISSIONS=["dashboard","assets","planning","movements","maintenance","inventory","stock","reports","setup","users"];
 const COOKIE="prcs_session",DAY=86_400;
 function secret(){const value=process.env.AUTH_SECRET;if(!value||value.length<32)throw new Error("AUTH_SECRET must contain at least 32 characters");return value}
 function sign(value:string){return createHmac("sha256",secret()).update(value).digest("base64url")}

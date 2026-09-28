@@ -3,8 +3,8 @@ import {FormEvent,useEffect,useState} from "react";
 import {apiFetch} from "../lib/api-client";
 
 type User={id:number;email:string;username:string|null;fullName:string;role:string;permissions:string[];active:boolean;createdAt:string};
-const permissions=[['dashboard','نظرة عامة'],['assets','الأصول والعهد'],['movements','التسليم والنقل'],['maintenance','الصيانة'],['inventory','الجرد'],['stock','المخزون'],['reports','التقارير'],['setup','التعريفات الأساسية'],['users','المستخدمون والصلاحيات']];
-const rolePermissions:Record<string,string[]>={"مدير النظام":permissions.map(x=>x[0]),"مسؤول العهد":["dashboard","assets","movements","inventory","reports"],"فني الصيانة":["dashboard","assets","maintenance"],"مدقق الجرد":["dashboard","assets","inventory","reports"],"مستخدم للقراءة":["dashboard","assets","reports"]};
+const permissions=[['dashboard','نظرة عامة'],['assets','الأصول والعهد'],['planning','التخطيط والاحتياج'],['movements','التسليم والنقل'],['maintenance','الصيانة'],['inventory','الجرد'],['stock','المخزون'],['reports','التقارير'],['setup','التعريفات الأساسية'],['users','المستخدمون والصلاحيات']];
+const rolePermissions:Record<string,string[]>={"مدير النظام":permissions.map(x=>x[0]),"مسؤول العهد":["dashboard","assets","planning","movements","inventory","reports"],"فني الصيانة":["dashboard","assets","maintenance"],"مدقق الجرد":["dashboard","assets","inventory","reports"],"مستخدم للقراءة":["dashboard","assets","reports"]};
 
 export default function UsersScreen(){
  const[users,setUsers]=useState<User[]>([]),[editing,setEditing]=useState<User|null>(null),[creating,setCreating]=useState(false),[msg,setMsg]=useState(""),[role,setRole]=useState("مسؤول العهد"),[saving,setSaving]=useState(false);
