@@ -1,6 +1,8 @@
 import {asc,eq} from "drizzle-orm";
 import {getDb} from "../../../db";
 import {categories,departments,facilities,products} from "../../../db/schema";
+import {currentUser} from "../../../lib/auth";
+import {canAccessAssetType} from "../../../lib/asset-scope";
 
 async function ensureSeedData(){
  const db=await getDb();
@@ -15,7 +17,7 @@ async function ensureSeedData(){
  return db;
 }
 
-export async function GET(){try{const db=await ensureSeedData();const[f,d,c,p]=await Promise.all([db.select().from(facilities).orderBy(asc(facilities.id)),db.select().from(departments).orderBy(asc(departments.id)),db.select().from(categories).orderBy(asc(categories.id)),db.select().from(products).orderBy(asc(products.id))]);return Response.json({facilities:f,departments:d,categories:c,products:p})}catch(e){return Response.json({error:e instanceof Error?e.message:"تعذر تحميل التعريفات"},{status:500})}}
+export async function GET(request:Request){try{const actor=await currentUser(request);if(!actor)return Response.json({error:"غير مصرح"},{status:403});const db=await ensureSeedData();const[f,d,c,p]=await Promise.all([db.select().from(facilities).orderBy(asc(facilities.id)),db.select().from(departments).orderBy(asc(departments.id)),db.select().from(categories).orderBy(asc(categories.id)),db.select().from(products).orderBy(asc(products.id))]);const visibleCategories=c.filter(item=>canAccessAssetType(actor,item.assetType)),ids=new Set(visibleCategories.map(item=>item.id));return Response.json({facilities:f,departments:d,categories:visibleCategories,products:p.filter(item=>ids.has(item.parentId))})}catch(e){return Response.json({error:e instanceof Error?e.message:"تعذر تحميل التعريفات"},{status:500})}}
 
 export async function POST(request:Request){try{const p=await request.json() as{entity?:string;name?:string;parentId?:number;usefulLifeYears?:number;assetType?:string};const name=p.name?.trim();if(!name)return Response.json({error:"الاسم مطلوب"},{status:400});const db=await ensureSeedData();let row;switch(p.entity){case"facility":[row]=await db.insert(facilities).values({name}).returning();break;case"category":if(!Number.isInteger(Number(p.usefulLifeYears))||Number(p.usefulLifeYears)<1)return Response.json({error:"العمر الافتراضي يجب أن يكون سنة واحدة على الأقل"},{status:400});if(!["تقني","طبي"].includes(p.assetType||"تقني"))return Response.json({error:"نوع الأصل غير صحيح"},{status:400});[row]=await db.insert(categories).values({name,assetType:p.assetType||"تقني",usefulLifeYears:Number(p.usefulLifeYears)}).returning();break;case"department":if(!p.parentId)throw new Error("المرفق مطلوب");[row]=await db.insert(departments).values({name,parentId:p.parentId}).returning();break;case"product":if(!p.parentId)throw new Error("الصنف مطلوب");[row]=await db.insert(products).values({name,parentId:p.parentId}).returning();break;default:return Response.json({error:"نوع التعريف غير صحيح"},{status:400})}return Response.json({item:row},{status:201})}catch(e){return Response.json({error:e instanceof Error?e.message:"تعذر حفظ التعريف"},{status:500})}}
 
