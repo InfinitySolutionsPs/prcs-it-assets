@@ -1,4 +1,4 @@
-"use client";
+"use client";\nimport SearchableSelect from "./SearchableSelect";
 import {FormEvent,useEffect,useState} from "react";
 import {apiFetch} from "../lib/api-client";
 
@@ -32,7 +32,7 @@ export default function UsersScreen(){
      <label>اسم الدخول<input name="username" defaultValue={editing?.username||""} minLength={3} required placeholder="مثال: walaa"/></label>
      <label>البريد الإلكتروني<input name="email" type="email" defaultValue={editing?.email} disabled={Boolean(editing)} required placeholder="name@example.com"/></label>
      <><label>{editing?'كلمة مرور جديدة (اختياري)':'كلمة المرور'}<input name="password" type="password" minLength={8} required={!editing} autoComplete="new-password" placeholder={editing?'اتركها فارغة دون تغيير':'8 أحرف على الأقل'}/></label><label>تأكيد كلمة المرور<input name="confirmPassword" type="password" minLength={8} required={!editing} autoComplete="new-password" placeholder="أعد إدخال كلمة المرور"/></label></>
-     <label>الدور<select name="role" value={currentRole} onChange={e=>{setRole(e.target.value);if(editing)setEditing({...editing,role:e.target.value,permissions:rolePermissions[e.target.value]})}}>{Object.keys(rolePermissions).map(r=><option key={r}>{r}</option>)}</select></label>
+     <label>الدور<SearchableSelect name="role" value={currentRole} onChange={e=>{setRole(e.target.value);if(editing)setEditing({...editing,role:e.target.value,permissions:rolePermissions[e.target.value]})}}>{Object.keys(rolePermissions).map(r=><option key={r}>{r}</option>)}</SearchableSelect></label>
      <fieldset><legend>صلاحيات الوصول</legend>{permissions.map(([key,label])=><label className="permissionCheck" key={`${currentRole}-${key}`}><input type="checkbox" name="permissions" value={key} defaultChecked={currentPermissions.includes(key)}/><span>{label}</span></label>)}</fieldset>
      {editing&&<label className="activeCheck"><input type="checkbox" name="active" defaultChecked={editing.active}/> الحساب نشط</label>}
      <div className="userFormActions"><button type="button" onClick={()=>{setEditing(null);setCreating(false);setMsg("")}}>إلغاء</button><button className="primary" disabled={saving}>{saving?'جاري الحفظ...':editing?'حفظ المستخدم':'إنشاء المستخدم'}</button></div>
