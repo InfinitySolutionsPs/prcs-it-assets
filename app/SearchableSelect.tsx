@@ -1,10 +1,11 @@
 "use client";
-import {ChangeEvent,isValidElement,ReactNode,SelectHTMLAttributes,useEffect,useMemo,useRef,useState} from "react";
+import {ChangeEvent,Children,isValidElement,ReactNode,SelectHTMLAttributes,useEffect,useMemo,useRef,useState} from "react";
 import {createPortal} from "react-dom";
 
 type Props=Omit<SelectHTMLAttributes<HTMLSelectElement>,"onChange"|"multiple"|"size"> & {
  onChange?:SelectHTMLAttributes<HTMLSelectElement>["onChange"];
  searchPlaceholder?:string;
+ placeholder?:string;
 };
 
 type SearchOption={value:string;label:string;disabled:boolean};
@@ -17,7 +18,7 @@ function nodeText(node:ReactNode):string{
 }
 
 export default function SearchableSelect({children,name,value,defaultValue,onChange,disabled,required,placeholder,searchPlaceholder="اكتب للبحث...",className="",...rest}:Props){
- const options=useMemo<SearchOption[]>(()=>Array.from(Array.isArray(children)?children:[children]).flatMap(child=>{
+ const options=useMemo<SearchOption[]>(()=>Children.toArray(children).flatMap(child=>{
   if(!isValidElement<{value?:string|number;disabled?:boolean;children?:ReactNode}>(child))return [];
   const label=nodeText(child.props.children);
   return [{value:String(child.props.value??label),label,disabled:Boolean(child.props.disabled)}];
@@ -74,7 +75,7 @@ export default function SearchableSelect({children,name,value,defaultValue,onCha
 
  return <div className={`searchableSelect ${className}`} ref={rootRef}>
   <input type="hidden" name={name} value={selectedValue} disabled={disabled}/>
-  <button {...rest} ref={buttonRef} type="button" className="searchableSelectButton" disabled={disabled} aria-haspopup="listbox" aria-expanded={open} aria-required={required} onClick={()=>setOpen(current=>!current)}>
+  <button ref={buttonRef} id={rest.id} type="button" className="searchableSelectButton" disabled={disabled} aria-label={rest["aria-label"]} aria-haspopup="listbox" aria-expanded={open} aria-required={required} onClick={()=>setOpen(current=>!current)}>
    <span className={!selected?"placeholder":""}>{selected?.label||placeholder||"اختر من القائمة"}</span><i>⌄</i>
   </button>
   {open&&typeof document!=="undefined"&&createPortal(<div className="searchableSelectMenu" style={{top:position.top,left:position.left,width:position.width}} dir="rtl">
