@@ -39,9 +39,9 @@ export default function SetupManager({tab,setTab,facilities,departments,categori
  useEffect(()=>{if(childPage>childPages)setChildPage(childPages)},[childPage,childPages]);
 
  const importCatalog=async()=>{
-  if(!confirm(`سيتم استيراد تصنيفات وأجهزة القسم ${assetTypeView}. لن تُحذف البيانات الحالية وستُتجاوز العناصر المكررة. هل تريد المتابعة؟`))return;
+  if(!confirm("سيتم استيراد جميع التصنيفات والأجهزة التقنية والطبية الموجودة في الملف. لن تُحذف البيانات الحالية وستُتجاوز العناصر المكررة. هل تريد المتابعة؟"))return;
   setImporting(true);setError("");setImportMessage("");
-  try{const r=await apiFetch("/api/setup/import-catalog",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({assetType:assetTypeView})}),d=await r.json();if(!r.ok)throw new Error(d.error||"تعذر الاستيراد");onImported(d.categories,d.products);setImportMessage(`تمت إضافة ${d.createdCategories} تصنيف و${d.createdDevices} جهاز، وتجاوز ${d.skippedDevices} جهاز موجود مسبقًا.`)}catch(x){setError(x instanceof Error?x.message:"تعذر الاستيراد")}finally{setImporting(false)}
+  try{const r=await apiFetch("/api/setup/import-catalog",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({assetType:"الكل"})}),d=await r.json();if(!r.ok)throw new Error(d.error||"تعذر الاستيراد");onImported(d.categories,d.products);setImportMessage(`اكتمل استيراد الملف: أضيف ${d.createdCategories} تصنيف و${d.createdDevices} جهاز، وتجاوز النظام ${d.skippedDevices} جهاز موجود مسبقًا.`)}catch(x){setError(x instanceof Error?x.message:"تعذر الاستيراد")}finally{setImporting(false)}
  };
 
  const update=async(e:FormEvent<HTMLFormElement>)=>{
@@ -67,7 +67,7 @@ export default function SetupManager({tab,setTab,facilities,departments,categori
   </div>
   {error&&<div className="setupError">⚠ {error}</div>}
   {!isFacilities&&<section className="assetTypeChooser" aria-label="اختيار نوع الأجهزة">
-   <div className="assetTypeChooserHead"><div><h2>اختر مجال الأجهزة</h2><p>اعرض وأدر التصنيفات والأجهزة التقنية أو الطبية بشكل مستقل.</p></div><button type="button" className="catalogImportButton" onClick={importCatalog} disabled={importing}>{importing?"جاري الاستيراد...":`⇩ استيراد قائمة الأجهزة ${assetTypeView==="طبي"?"الطبية":"التقنية"}`}</button></div>
+   <div className="assetTypeChooserHead"><div><h2>اختر مجال الأجهزة</h2><p>اعرض وأدر التصنيفات والأجهزة التقنية أو الطبية بشكل مستقل.</p></div><button type="button" className="catalogImportButton" onClick={importCatalog} disabled={importing}>{importing?"جاري استيراد الملف...":"⇩ استيراد جميع أجهزة الملف"}</button></div>
    <div className="assetTypeOptions">
     {(["تقني","طبي"] as const).map(type=>{const ids=new Set(categories.filter(category=>(category.assetType||"تقني")===type).map(category=>category.id));const count=products.filter(product=>ids.has(product.parentId)).length;return <button type="button" key={type} className={`assetTypeOption ${assetTypeView===type?"active":""} ${type==="طبي"?"medical":"technical"}`} onClick={()=>setAssetTypeView(type)}><span className="assetTypeOptionIcon">{type==="طبي"?"✚":"⌘"}</span><span><strong>الأجهزة {type==="طبي"?"الطبية":"التقنية"}</strong><small>{ids.size} تصنيف · {count} جهاز</small></span><b>{assetTypeView===type?"محدد":"اختيار"}</b></button>})}
    </div>

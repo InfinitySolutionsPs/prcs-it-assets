@@ -9,11 +9,11 @@ const normalize=(value:string)=>value.trim().toLocaleLowerCase();
 export async function POST(request:NextRequest){
  try{
   const body=await request.json().catch(()=>({}));
-  const assetType=body.assetType as CatalogAssetType;
-  if(assetType!=="تقني"&&assetType!=="طبي")return NextResponse.json({error:"يرجى اختيار نوع الأجهزة المراد استيرادها"},{status:400});
+  const assetType=body.assetType as CatalogAssetType|"الكل";
+  if(assetType!=="تقني"&&assetType!=="طبي"&&assetType!=="الكل")return NextResponse.json({error:"يرجى اختيار نوع الأجهزة المراد استيرادها"},{status:400});
 
   const db=await getDb();
-  const groups=deviceCatalog.filter(group=>group.assetType===assetType);
+  const groups=assetType==="الكل"?deviceCatalog:deviceCatalog.filter(group=>group.assetType===assetType);
   const existingCategories=await db.select().from(categories).orderBy(asc(categories.id));
   const categoryByName=new Map(existingCategories.map(category=>[normalize(category.name),category]));
   let createdCategories=0,updatedCategories=0,createdDevices=0,skippedDevices=0;
