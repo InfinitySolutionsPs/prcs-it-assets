@@ -1,9 +1,11 @@
 "use client";
-import {ChangeEvent,Children,isValidElement,ReactNode,SelectHTMLAttributes,useEffect,useMemo,useRef,useState} from "react";
+import {Children,isValidElement,ReactNode,SelectHTMLAttributes,useEffect,useMemo,useRef,useState} from "react";
 import {createPortal} from "react-dom";
 
+type SelectValueChange={target:{value:string};currentTarget:{value:string}};
+
 type Props=Omit<SelectHTMLAttributes<HTMLSelectElement>,"onChange"|"multiple"|"size"> & {
- onChange?:SelectHTMLAttributes<HTMLSelectElement>["onChange"];
+ onChange?:(event:SelectValueChange)=>void;
  searchPlaceholder?:string;
  placeholder?:string;
 };
@@ -69,7 +71,7 @@ export default function SearchableSelect({children,name,value,defaultValue,onCha
 
  const choose=(next:string)=>{
   if(!isControlled)setInternalValue(next);
-  onChange?.({target:{value:next},currentTarget:{value:next}} as ChangeEvent<HTMLSelectElement>);
+  onChange?.({target:{value:next},currentTarget:{value:next}});
   setOpen(false);setQuery("");
  };
 
