@@ -1,26 +1,339 @@
-import {asc,eq} from "drizzle-orm";
-import {getDb} from "../../../db";
-import {categories,departments,facilities,products} from "../../../db/schema";
-import {currentUser} from "../../../lib/auth";
-import {canAccessAssetType} from "../../../lib/asset-scope";
+import { asc, eq } from "drizzle-orm";
+import { getDb } from "../../../db";
+import {
+  categories,
+  departments,
+  facilities,
+  products,
+} from "../../../db/schema";
+import { currentUser, requirePermission } from "../../../lib/auth";
+import { canAccessAssetType } from "../../../lib/asset-scope";
 
-async function ensureSeedData(){
- const db=await getDb();
- const existing=await db.select().from(facilities).limit(1);
- if(existing.length)return db;
- const facilityNames=["مستشفى القدس الميداني","مبنى الأمل الإداري","المخازن المركزية","مستشفى السرايا","فرع دير البلح"];
- const categoryNames=["أجهزة حاسوب","أجهزة لابتوب","سويتشات","وحدات UniFi","UPS وطاقة","كاميرات ومراقبة"];
- const facilityRows=[];for(const name of facilityNames){const[row]=await db.insert(facilities).values({name}).returning();facilityRows.push(row)}
- const categoryRows=[];for(const name of categoryNames){const[row]=await db.insert(categories).values({name,usefulLifeYears:5}).returning();categoryRows.push(row)}
- await db.insert(departments).values([{name:"قسم الاستقبال",parentId:facilityRows[0].id},{name:"قسم تكنولوجيا المعلومات",parentId:facilityRows[1].id},{name:"غرفة السيرفر",parentId:facilityRows[1].id},{name:"إدارة المخازن",parentId:facilityRows[2].id},{name:"شبكة المستشفى",parentId:facilityRows[3].id},{name:"الأمن والحماية",parentId:facilityRows[4].id}]);
- await db.insert(products).values([{name:"HP ProDesk 600 G6",parentId:categoryRows[0].id},{name:"Dell Latitude 5420",parentId:categoryRows[1].id},{name:"Cisco Catalyst 9200",parentId:categoryRows[2].id},{name:"UniFi UAP-AC-LITE",parentId:categoryRows[3].id},{name:"APC Smart-UPS 1500",parentId:categoryRows[4].id},{name:"Hikvision DS-7632NI",parentId:categoryRows[5].id}]);
- return db;
+async function ensureSeedData() {
+  const db = await getDb();
+  const existing = await db.select().from(facilities).limit(1);
+  if (existing.length) return db;
+  const facilityNames = [
+    "مستشفى القدس الميداني",
+    "مبنى الأمل الإداري",
+    "المخازن المركزية",
+    "مستشفى السرايا",
+    "فرع دير البلح",
+  ];
+  const categoryNames = [
+    "أجهزة حاسوب",
+    "أجهزة لابتوب",
+    "سويتشات",
+    "وحدات UniFi",
+    "UPS وطاقة",
+    "كاميرات ومراقبة",
+  ];
+  const facilityRows = [];
+  for (const name of facilityNames) {
+    const [row] = await db.insert(facilities).values({ name }).returning();
+    facilityRows.push(row);
+  }
+  const categoryRows = [];
+  for (const name of categoryNames) {
+    const [row] = await db
+      .insert(categories)
+      .values({ name, usefulLifeYears: 5 })
+      .returning();
+    categoryRows.push(row);
+  }
+  await db.insert(departments).values([
+    { name: "قسم الاستقبال", parentId: facilityRows[0].id },
+    { name: "قسم تكنولوجيا المعلومات", parentId: facilityRows[1].id },
+    { name: "غرفة السيرفر", parentId: facilityRows[1].id },
+    { name: "إدارة المخازن", parentId: facilityRows[2].id },
+    { name: "شبكة المستشفى", parentId: facilityRows[3].id },
+    { name: "الأمن والحماية", parentId: facilityRows[4].id },
+  ]);
+  await db.insert(products).values([
+    { name: "HP ProDesk 600 G6", parentId: categoryRows[0].id },
+    { name: "Dell Latitude 5420", parentId: categoryRows[1].id },
+    { name: "Cisco Catalyst 9200", parentId: categoryRows[2].id },
+    { name: "UniFi UAP-AC-LITE", parentId: categoryRows[3].id },
+    { name: "APC Smart-UPS 1500", parentId: categoryRows[4].id },
+    { name: "Hikvision DS-7632NI", parentId: categoryRows[5].id },
+  ]);
+  return db;
 }
 
-export async function GET(request:Request){try{const actor=await currentUser(request);if(!actor)return Response.json({error:"غير مصرح"},{status:403});const db=await ensureSeedData();const[f,d,c,p]=await Promise.all([db.select().from(facilities).orderBy(asc(facilities.id)),db.select().from(departments).orderBy(asc(departments.id)),db.select().from(categories).orderBy(asc(categories.id)),db.select().from(products).orderBy(asc(products.id))]);const visibleCategories=c.filter(item=>canAccessAssetType(actor,item.assetType)),ids=new Set(visibleCategories.map(item=>item.id));return Response.json({facilities:f,departments:d,categories:visibleCategories,products:p.filter(item=>ids.has(item.parentId))})}catch(e){return Response.json({error:e instanceof Error?e.message:"تعذر تحميل التعريفات"},{status:500})}}
+export async function GET(request: Request) {
+  try {
+    const actor = await currentUser(request);
+    if (!actor) return Response.json({ error: "غير مصرح" }, { status: 403 });
+    const db = await ensureSeedData();
+    const [f, d, c, p] = await Promise.all([
+      db.select().from(facilities).orderBy(asc(facilities.id)),
+      db.select().from(departments).orderBy(asc(departments.id)),
+      db.select().from(categories).orderBy(asc(categories.id)),
+      db.select().from(products).orderBy(asc(products.id)),
+    ]);
+    const visibleCategories = c.filter((item) =>
+        canAccessAssetType(actor, item.assetType),
+      ),
+      ids = new Set(visibleCategories.map((item) => item.id));
+    return Response.json({
+      facilities: f,
+      departments: d,
+      categories: visibleCategories,
+      products: p.filter((item) => ids.has(item.parentId)),
+    });
+  } catch (e) {
+    return Response.json(
+      { error: e instanceof Error ? e.message : "تعذر تحميل التعريفات" },
+      { status: 500 },
+    );
+  }
+}
 
-export async function POST(request:Request){try{const p=await request.json() as{entity?:string;name?:string;parentId?:number;usefulLifeYears?:number;assetType?:string};const name=p.name?.trim();if(!name)return Response.json({error:"الاسم مطلوب"},{status:400});const db=await ensureSeedData();let row;switch(p.entity){case"facility":[row]=await db.insert(facilities).values({name}).returning();break;case"category":if(!Number.isInteger(Number(p.usefulLifeYears))||Number(p.usefulLifeYears)<1)return Response.json({error:"العمر الافتراضي يجب أن يكون سنة واحدة على الأقل"},{status:400});if(!["تقني","طبي"].includes(p.assetType||"تقني"))return Response.json({error:"نوع الأصل غير صحيح"},{status:400});[row]=await db.insert(categories).values({name,assetType:p.assetType||"تقني",usefulLifeYears:Number(p.usefulLifeYears)}).returning();break;case"department":if(!p.parentId)throw new Error("المرفق مطلوب");[row]=await db.insert(departments).values({name,parentId:p.parentId}).returning();break;case"product":if(!p.parentId)throw new Error("الصنف مطلوب");[row]=await db.insert(products).values({name,parentId:p.parentId}).returning();break;default:return Response.json({error:"نوع التعريف غير صحيح"},{status:400})}return Response.json({item:row},{status:201})}catch(e){return Response.json({error:e instanceof Error?e.message:"تعذر حفظ التعريف"},{status:500})}}
+export async function POST(request: Request) {
+  const actor = await requirePermission(request, "setup");
+  if (!actor) return Response.json({ error: "غير مصرح" }, { status: 403 });
+  try {
+    const p = (await request.json()) as {
+      entity?: string;
+      name?: string;
+      parentId?: number;
+      usefulLifeYears?: number;
+      assetType?: string;
+    };
+    const name = p.name?.trim();
+    if (!name) return Response.json({ error: "الاسم مطلوب" }, { status: 400 });
+    const db = await ensureSeedData();
+    let row;
+    switch (p.entity) {
+      case "facility":
+        [row] = await db.insert(facilities).values({ name }).returning();
+        break;
+      case "category":
+        if (
+          !Number.isInteger(Number(p.usefulLifeYears)) ||
+          Number(p.usefulLifeYears) < 1
+        )
+          return Response.json(
+            { error: "العمر الافتراضي يجب أن يكون سنة واحدة على الأقل" },
+            { status: 400 },
+          );
+        if (!["تقني", "طبي"].includes(p.assetType || "تقني"))
+          return Response.json(
+            { error: "نوع الأصل غير صحيح" },
+            { status: 400 },
+          );
+        if (!canAccessAssetType(actor, p.assetType || "تقني"))
+          return Response.json(
+            { error: "لا تملك صلاحية إضافة تصنيف من هذا النوع" },
+            { status: 403 },
+          );
+        [row] = await db
+          .insert(categories)
+          .values({
+            name,
+            assetType: p.assetType || "تقني",
+            usefulLifeYears: Number(p.usefulLifeYears),
+          })
+          .returning();
+        break;
+      case "department":
+        if (!p.parentId) throw new Error("المرفق مطلوب");
+        [row] = await db
+          .insert(departments)
+          .values({ name, parentId: p.parentId })
+          .returning();
+        break;
+      case "product":
+        if (!p.parentId) throw new Error("الصنف مطلوب");
+        {
+          const [parent] = await db.select().from(categories).where(eq(categories.id, p.parentId)).limit(1);
+          if (!parent || !canAccessAssetType(actor, parent.assetType))
+            return Response.json({ error: "لا تملك صلاحية إضافة جهاز لهذا الصنف" }, { status: 403 });
+        }
+        [row] = await db
+          .insert(products)
+          .values({ name, parentId: p.parentId })
+          .returning();
+        break;
+      default:
+        return Response.json(
+          { error: "نوع التعريف غير صحيح" },
+          { status: 400 },
+        );
+    }
+    return Response.json({ item: row }, { status: 201 });
+  } catch (e) {
+    return Response.json(
+      { error: e instanceof Error ? e.message : "تعذر حفظ التعريف" },
+      { status: 500 },
+    );
+  }
+}
 
-export async function PATCH(request:Request){try{const p=await request.json()as{entity?:string;id?:number;name?:string;parentId?:number;usefulLifeYears?:number;assetType?:string},id=Number(p.id),name=p.name?.trim();if(!id||!name)return Response.json({error:"الاسم مطلوب"},{status:400});const db=await ensureSeedData();let row;switch(p.entity){case"facility":[row]=await db.update(facilities).set({name}).where(eq(facilities.id,id)).returning();break;case"category":if(!Number.isInteger(Number(p.usefulLifeYears))||Number(p.usefulLifeYears)<1)return Response.json({error:"العمر الافتراضي يجب أن يكون سنة واحدة على الأقل"},{status:400});if(!["تقني","طبي"].includes(p.assetType||"تقني"))return Response.json({error:"نوع الأصل غير صحيح"},{status:400});[row]=await db.update(categories).set({name,assetType:p.assetType||"تقني",usefulLifeYears:Number(p.usefulLifeYears)}).where(eq(categories.id,id)).returning();break;case"department":if(!p.parentId)return Response.json({error:"المرفق مطلوب"},{status:400});[row]=await db.update(departments).set({name,parentId:p.parentId}).where(eq(departments.id,id)).returning();break;case"product":if(!p.parentId)return Response.json({error:"الصنف مطلوب"},{status:400});[row]=await db.update(products).set({name,parentId:p.parentId}).where(eq(products.id,id)).returning();break;default:return Response.json({error:"نوع التعريف غير صحيح"},{status:400})}if(!row)return Response.json({error:"السجل غير موجود"},{status:404});return Response.json({item:row})}catch(e){return Response.json({error:e instanceof Error?e.message:"تعذر تعديل التعريف"},{status:500})}}
+export async function PATCH(request: Request) {
+  const actor = await requirePermission(request, "setup");
+  if (!actor) return Response.json({ error: "غير مصرح" }, { status: 403 });
+  try {
+    const p = (await request.json()) as {
+        entity?: string;
+        id?: number;
+        name?: string;
+        parentId?: number;
+        usefulLifeYears?: number;
+        assetType?: string;
+      },
+      id = Number(p.id),
+      name = p.name?.trim();
+    if (!id || !name)
+      return Response.json({ error: "الاسم مطلوب" }, { status: 400 });
+    const db = await ensureSeedData();
+    let row;
+    switch (p.entity) {
+      case "facility":
+        [row] = await db
+          .update(facilities)
+          .set({ name })
+          .where(eq(facilities.id, id))
+          .returning();
+        break;
+      case "category":
+        {
+          const [current] = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
+          if (!current || !canAccessAssetType(actor, current.assetType) || !canAccessAssetType(actor, p.assetType || "تقني"))
+            return Response.json({ error: "لا تملك صلاحية تعديل هذا التصنيف" }, { status: 403 });
+        }
+        if (
+          !Number.isInteger(Number(p.usefulLifeYears)) ||
+          Number(p.usefulLifeYears) < 1
+        )
+          return Response.json(
+            { error: "العمر الافتراضي يجب أن يكون سنة واحدة على الأقل" },
+            { status: 400 },
+          );
+        if (!["تقني", "طبي"].includes(p.assetType || "تقني"))
+          return Response.json(
+            { error: "نوع الأصل غير صحيح" },
+            { status: 400 },
+          );
+        [row] = await db
+          .update(categories)
+          .set({
+            name,
+            assetType: p.assetType || "تقني",
+            usefulLifeYears: Number(p.usefulLifeYears),
+          })
+          .where(eq(categories.id, id))
+          .returning();
+        break;
+      case "department":
+        if (!p.parentId)
+          return Response.json({ error: "المرفق مطلوب" }, { status: 400 });
+        [row] = await db
+          .update(departments)
+          .set({ name, parentId: p.parentId })
+          .where(eq(departments.id, id))
+          .returning();
+        break;
+      case "product":
+        if (!p.parentId)
+          return Response.json({ error: "الصنف مطلوب" }, { status: 400 });
+        {
+          const [parent] = await db.select().from(categories).where(eq(categories.id, p.parentId)).limit(1);
+          if (!parent || !canAccessAssetType(actor, parent.assetType))
+            return Response.json({ error: "لا تملك صلاحية تعديل هذا الجهاز" }, { status: 403 });
+        }
+        [row] = await db
+          .update(products)
+          .set({ name, parentId: p.parentId })
+          .where(eq(products.id, id))
+          .returning();
+        break;
+      default:
+        return Response.json(
+          { error: "نوع التعريف غير صحيح" },
+          { status: 400 },
+        );
+    }
+    if (!row)
+      return Response.json({ error: "السجل غير موجود" }, { status: 404 });
+    return Response.json({ item: row });
+  } catch (e) {
+    return Response.json(
+      { error: e instanceof Error ? e.message : "تعذر تعديل التعريف" },
+      { status: 500 },
+    );
+  }
+}
 
-export async function DELETE(request:Request){try{const p=await request.json()as{entity?:string;id?:number},id=Number(p.id);if(!id)return Response.json({error:"السجل غير محدد"},{status:400});const db=await ensureSeedData();switch(p.entity){case"facility":if((await db.select().from(departments).where(eq(departments.parentId,id)).limit(1)).length)return Response.json({error:"لا يمكن حذف المرفق قبل حذف الأقسام التابعة له"},{status:409});await db.delete(facilities).where(eq(facilities.id,id));break;case"category":if((await db.select().from(products).where(eq(products.parentId,id)).limit(1)).length)return Response.json({error:"لا يمكن حذف الصنف قبل حذف الأجهزة التابعة له"},{status:409});await db.delete(categories).where(eq(categories.id,id));break;case"department":await db.delete(departments).where(eq(departments.id,id));break;case"product":await db.delete(products).where(eq(products.id,id));break;default:return Response.json({error:"نوع التعريف غير صحيح"},{status:400})}return Response.json({deleted:true})}catch(e){return Response.json({error:e instanceof Error?e.message:"تعذر حذف التعريف"},{status:500})}}
+export async function DELETE(request: Request) {
+  const actor = await requirePermission(request, "setup");
+  if (!actor) return Response.json({ error: "غير مصرح" }, { status: 403 });
+  try {
+    const p = (await request.json()) as { entity?: string; id?: number },
+      id = Number(p.id);
+    if (!id) return Response.json({ error: "السجل غير محدد" }, { status: 400 });
+    const db = await ensureSeedData();
+    switch (p.entity) {
+      case "facility":
+        if (
+          (
+            await db
+              .select()
+              .from(departments)
+              .where(eq(departments.parentId, id))
+              .limit(1)
+          ).length
+        )
+          return Response.json(
+            { error: "لا يمكن حذف المرفق قبل حذف الأقسام التابعة له" },
+            { status: 409 },
+          );
+        await db.delete(facilities).where(eq(facilities.id, id));
+        break;
+      case "category":
+        {
+          const [current] = await db.select().from(categories).where(eq(categories.id, id)).limit(1);
+          if (!current || !canAccessAssetType(actor, current.assetType))
+            return Response.json({ error: "لا تملك صلاحية حذف هذا التصنيف" }, { status: 403 });
+        }
+        if (
+          (
+            await db
+              .select()
+              .from(products)
+              .where(eq(products.parentId, id))
+              .limit(1)
+          ).length
+        )
+          return Response.json(
+            { error: "لا يمكن حذف الصنف قبل حذف الأجهزة التابعة له" },
+            { status: 409 },
+          );
+        await db.delete(categories).where(eq(categories.id, id));
+        break;
+      case "department":
+        await db.delete(departments).where(eq(departments.id, id));
+        break;
+      case "product":
+        {
+          const [product] = await db.select().from(products).where(eq(products.id, id)).limit(1);
+          const [parent] = product ? await db.select().from(categories).where(eq(categories.id, product.parentId)).limit(1) : [];
+          if (!parent || !canAccessAssetType(actor, parent.assetType))
+            return Response.json({ error: "لا تملك صلاحية حذف هذا الجهاز" }, { status: 403 });
+        }
+        await db.delete(products).where(eq(products.id, id));
+        break;
+      default:
+        return Response.json(
+          { error: "نوع التعريف غير صحيح" },
+          { status: 400 },
+        );
+    }
+    return Response.json({ deleted: true });
+  } catch (e) {
+    return Response.json(
+      { error: e instanceof Error ? e.message : "تعذر حذف التعريف" },
+      { status: 500 },
+    );
+  }
+}
