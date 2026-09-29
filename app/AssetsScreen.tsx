@@ -1,4 +1,5 @@
-"use client";\nimport SearchableSelect from "./SearchableSelect";
+"use client";
+import SearchableSelect from "./SearchableSelect";
 import {useEffect,useMemo,useState} from "react";
 import {apiFetch} from "../lib/api-client";
 
