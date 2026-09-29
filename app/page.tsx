@@ -1,4 +1,5 @@
-"use client";\nimport SearchableSelect from "./SearchableSelect";
+"use client";
+import SearchableSelect from "./SearchableSelect";
 import {FormEvent,useEffect,useMemo,useState} from "react";
 import AssetsScreen from "./AssetsScreen";
 import DeliveryTransferScreen from "./DeliveryTransferScreen";
