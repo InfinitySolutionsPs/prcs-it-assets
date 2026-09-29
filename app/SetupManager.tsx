@@ -6,7 +6,7 @@ type Named={id:number;name:string;usefulLifeYears?:number;assetType?:string};
 type Child=Named&{parentId:number};
 type Entity="facility"|"department"|"category"|"product";
 
-export default function SetupManager({tab,setTab,facilities,departments,categories,products,onUpdate,onDelete,addNamed,addChild}:{tab:string;setTab:(x:string)=>void;facilities:Named[];departments:Child[];categories:Named[];products:Child[];onUpdate:(e:Entity,item:Named|Child)=>void;onDelete:(e:Entity,id:number)=>void;addNamed:(e:FormEvent<HTMLFormElement>,k:"facility"|"category")=>void;addChild:(e:FormEvent<HTMLFormElement>,k:"department"|"product")=>void}){
+export default function SetupManager({tab,setTab,facilities,departments,categories,products,onUpdate,onDelete,onImported,addNamed,addChild}:{tab:string;setTab:(x:string)=>void;facilities:Named[];departments:Child[];categories:Named[];products:Child[];onUpdate:(e:Entity,item:Named|Child)=>void;onDelete:(e:Entity,id:number)=>void;onImported:(categories:Named[],products:Child[])=>void;addNamed:(e:FormEvent<HTMLFormElement>,k:"facility"|"category")=>void;addChild:(e:FormEvent<HTMLFormElement>,k:"department"|"product")=>void}){
  const [editing,setEditing]=useState<{entity:Entity;item:Named|Child}|null>(null);
  const [error,setError]=useState("");
  const [masterSearch,setMasterSearch]=useState("");
@@ -15,9 +15,15 @@ export default function SetupManager({tab,setTab,facilities,departments,categori
  const [childPage,setChildPage]=useState(1);
  const [masterPageSize,setMasterPageSize]=useState(10);
  const [childPageSize,setChildPageSize]=useState(10);
+ const [assetTypeView,setAssetTypeView]=useState<"تقني"|"طبي">("طبي");
+ const [importing,setImporting]=useState(false);
+ const [importMessage,setImportMessage]=useState("");
  const isFacilities=tab==="المرافق والأقسام";
- const masters=isFacilities?facilities:categories;
- const children=isFacilities?departments:products;
+ const allMasters=isFacilities?facilities:categories;
+ const allChildren=isFacilities?departments:products;
+ const masters=isFacilities?allMasters:categories.filter(item=>(item.assetType||"تقني")===assetTypeView);
+ const visibleMasterIds=new Set(masters.map(item=>item.id));
+ const children=isFacilities?allChildren:products.filter(item=>visibleMasterIds.has(item.parentId));
  const masterEntity:Entity=isFacilities?"facility":"category";
  const childEntity:Entity=isFacilities?"department":"product";
  const normalizedMasterSearch=masterSearch.trim().toLowerCase();
@@ -28,9 +34,15 @@ export default function SetupManager({tab,setTab,facilities,departments,categori
  const childPages=Math.max(1,Math.ceil(filteredChildren.length/childPageSize));
  const visibleMasters=filteredMasters.slice((masterPage-1)*masterPageSize,masterPage*masterPageSize);
  const visibleChildren=filteredChildren.slice((childPage-1)*childPageSize,childPage*childPageSize);
- useEffect(()=>{setMasterPage(1);setChildPage(1);setMasterSearch("");setChildSearch("")},[tab]);
+ useEffect(()=>{setMasterPage(1);setChildPage(1);setMasterSearch("");setChildSearch("");setImportMessage("")},[tab,assetTypeView]);
  useEffect(()=>{if(masterPage>masterPages)setMasterPage(masterPages)},[masterPage,masterPages]);
  useEffect(()=>{if(childPage>childPages)setChildPage(childPages)},[childPage,childPages]);
+
+ const importCatalog=async()=>{
+  if(!confirm(`سيتم استيراد تصنيفات وأجهزة القسم ${assetTypeView}. لن تُحذف البيانات الحالية وستُتجاوز العناصر المكررة. هل تريد المتابعة؟`))return;
+  setImporting(true);setError("");setImportMessage("");
+  try{const r=await apiFetch("/api/setup/import-catalog",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({assetType:assetTypeView})}),d=await r.json();if(!r.ok)throw new Error(d.error||"تعذر الاستيراد");onImported(d.categories,d.products);setImportMessage(`تمت إضافة ${d.createdCategories} تصنيف و${d.createdDevices} جهاز، وتجاوز ${d.skippedDevices} جهاز موجود مسبقًا.`)}catch(x){setError(x instanceof Error?x.message:"تعذر الاستيراد")}finally{setImporting(false)}
+ };
 
  const update=async(e:FormEvent<HTMLFormElement>)=>{
   e.preventDefault();
@@ -54,12 +66,19 @@ export default function SetupManager({tab,setTab,facilities,departments,categori
    </div>
   </div>
   {error&&<div className="setupError">⚠ {error}</div>}
+  {!isFacilities&&<section className="assetTypeChooser" aria-label="اختيار نوع الأجهزة">
+   <div className="assetTypeChooserHead"><div><h2>اختر مجال الأجهزة</h2><p>اعرض وأدر التصنيفات والأجهزة التقنية أو الطبية بشكل مستقل.</p></div><button type="button" className="catalogImportButton" onClick={importCatalog} disabled={importing}>{importing?"جاري الاستيراد...":`⇩ استيراد قائمة الأجهزة ${assetTypeView==="طبي"?"الطبية":"التقنية"}`}</button></div>
+   <div className="assetTypeOptions">
+    {(["تقني","طبي"] as const).map(type=>{const ids=new Set(categories.filter(category=>(category.assetType||"تقني")===type).map(category=>category.id));const count=products.filter(product=>ids.has(product.parentId)).length;return <button type="button" key={type} className={`assetTypeOption ${assetTypeView===type?"active":""} ${type==="طبي"?"medical":"technical"}`} onClick={()=>setAssetTypeView(type)}><span className="assetTypeOptionIcon">{type==="طبي"?"✚":"⌘"}</span><span><strong>الأجهزة {type==="طبي"?"الطبية":"التقنية"}</strong><small>{ids.size} تصنيف · {count} جهاز</small></span><b>{assetTypeView===type?"محدد":"اختيار"}</b></button>})}
+   </div>
+   {importMessage&&<div className="importSuccess">✓ {importMessage}</div>}
+  </section>}
 
   <article className="panel definitionSection">
    <div className="definitionSectionHead"><div><span className="sectionIcon">{isFacilities?"⌂":"▣"}</span><div><h2>{isFacilities?"المرافق":"أصناف الأصول"}</h2><p>{isFacilities?"تعريف المستشفيات والمراكز والمباني":"تعريف أصناف الأجهزة التقنية والطبية وأعمارها الافتراضية"}</p></div></div><span className="countBadge">{masters.length}</span></div>
    <form className="definitionAddForm masterDefinitionForm" onSubmit={e=>addNamed(e,isFacilities?"facility":"category")}>
     <label className="definitionNameField"><span>{isFacilities?"اسم المرفق":"اسم الصنف"}</span><input name="name" required placeholder={isFacilities?"أدخل اسم المرفق كاملًا":"أدخل اسم الصنف كاملًا، مثال: أجهزة مراقبة العلامات الحيوية"}/></label>
-    {!isFacilities&&<label><span>نوع الجهاز</span><select name="assetType" defaultValue="تقني"><option>تقني</option><option>طبي</option></select></label>}
+    {!isFacilities&&<label><span>نوع الأجهزة</span><div className={`selectedAssetType ${assetTypeView==="طبي"?"medical":"technical"}`}>{assetTypeView}</div><input type="hidden" name="assetType" value={assetTypeView}/></label>}
     {!isFacilities&&<label><span>العمر الافتراضي</span><div className="yearsField"><input name="usefulLifeYears" type="number" min="1" max="100" defaultValue="5" required/><b>سنة</b></div></label>}
     <button className="primary">＋ إضافة {isFacilities?"المرفق":"الصنف"}</button>
    </form>
