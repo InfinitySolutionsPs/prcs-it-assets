@@ -3,23 +3,17 @@ import {NextRequest,NextResponse} from "next/server";
 import {getDb} from "../../../../db";
 import {categories,products} from "../../../../db/schema";
 import {deviceCatalog,type CatalogAssetType} from "../../../../data/device-catalog";
-import {requirePermission} from "../../../../lib/auth";
-import {canAccessAssetType,normalizeAssetScope} from "../../../../lib/asset-scope";
 
 const normalize=(value:string)=>value.trim().toLocaleLowerCase();
 
 export async function POST(request:NextRequest){
- const actor=await requirePermission(request,"setup");
- if(!actor)return NextResponse.json({error:"غير مصرح"},{status:403});
  try{
   const body=await request.json().catch(()=>({}));
   const assetType=body.assetType as CatalogAssetType|"الكل";
   if(assetType!=="تقني"&&assetType!=="طبي"&&assetType!=="الكل")return NextResponse.json({error:"يرجى اختيار نوع الأجهزة المراد استيرادها"},{status:400});
-  if(assetType!=="الكل"&&!canAccessAssetType(actor,assetType))return NextResponse.json({error:"لا تملك صلاحية استيراد هذا النوع"},{status:403});
 
   const db=await getDb();
-  const scope=normalizeAssetScope(actor);
-  const groups=deviceCatalog.filter(group=>(assetType==="الكل"||group.assetType===assetType)&&(scope==="الكل"||group.assetType===scope));
+  const groups=assetType==="الكل"?deviceCatalog:deviceCatalog.filter(group=>group.assetType===assetType);
   const existingCategories=await db.select().from(categories).orderBy(asc(categories.id));
   const categoryByName=new Map(existingCategories.map(category=>[normalize(category.name),category]));
   let createdCategories=0,updatedCategories=0,createdDevices=0,skippedDevices=0;

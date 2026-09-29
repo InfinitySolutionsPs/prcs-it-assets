@@ -78,7 +78,7 @@ export default function SearchableSelect({children,name,value,defaultValue,onCha
  return <div className={`searchableSelect ${className}`} ref={rootRef}>
   <input type="hidden" name={name} value={selectedValue} disabled={disabled}/>
   <button ref={buttonRef} id={rest.id} type="button" className="searchableSelectButton" disabled={disabled} aria-label={rest["aria-label"]} aria-haspopup="listbox" aria-expanded={open} aria-required={required} onClick={()=>setOpen(current=>!current)}>
-   <span className={!selected?"searchableSelectPlaceholder":""}>{selected?.label||placeholder||"اختر من القائمة"}</span><i>⌄</i>
+   <span className={!selected?"placeholder":""}>{selected?.label||placeholder||"اختر من القائمة"}</span><i>⌄</i>
   </button>
   {open&&typeof document!=="undefined"&&createPortal(<div className="searchableSelectMenu" style={{top:position.top,left:position.left,width:position.width}} dir="rtl">
    <div className="searchableSelectSearch"><span>⌕</span><input ref={inputRef} value={query} onChange={event=>setQuery(event.target.value)} placeholder={searchPlaceholder}/></div>
