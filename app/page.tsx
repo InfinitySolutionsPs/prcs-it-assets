@@ -8,8 +8,8 @@ import {
   InventoryScreen,
   MaintenanceScreen,
   ReportsScreen,
-  StockScreen,
 } from "./OperationsScreens";
+import StockScreen from "./StockScreen";
 import SetupManager from "./SetupManager";
 import UsersScreen from "./UsersScreen";
 import { apiFetch, supabase } from "../lib/supabase-client";
@@ -482,7 +482,6 @@ export default function Home() {
         )}
         {active === "المخزون" && (
           <StockScreen
-            facilities={facilities}
             categories={categories}
             products={products}
           />

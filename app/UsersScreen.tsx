@@ -1,6 +1,6 @@
 "use client";
 import SearchableSelect from "./SearchableSelect";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../lib/api-client";
 
 type User = {
@@ -54,7 +54,13 @@ export default function UsersScreen({
     [creating, setCreating] = useState(false),
     [msg, setMsg] = useState(""),
     [role, setRole] = useState("مسؤول العهد"),
-    [saving, setSaving] = useState(false);
+    [saving, setSaving] = useState(false),
+    [userSearch, setUserSearch] = useState(""),
+    [roleFilter, setRoleFilter] = useState("الكل"),
+    [scopeFilter, setScopeFilter] = useState("الكل"),
+    [statusFilter, setStatusFilter] = useState("الكل"),
+    [page, setPage] = useState(1),
+    [pageSize, setPageSize] = useState(10);
   useEffect(() => {
     apiFetch("/api/users")
       .then((r) => r.json())
@@ -64,6 +70,28 @@ export default function UsersScreen({
   const globalAdmin =
     (currentUser.role === "مدير النظام" || currentUser.role === "مدير نظام") &&
     currentUser.assetScope === "الكل";
+  const filteredUsers = useMemo(
+    () => users.filter((user) => {
+      const text = `${user.fullName} ${user.username || ""} ${user.email} ${user.role} ${user.assetScope}`.toLocaleLowerCase();
+      return (!userSearch.trim() || text.includes(userSearch.trim().toLocaleLowerCase())) &&
+        (roleFilter === "الكل" || user.role === roleFilter) &&
+        (scopeFilter === "الكل" || user.assetScope === scopeFilter) &&
+        (statusFilter === "الكل" || (statusFilter === "نشط" ? user.active : !user.active));
+    }),
+    [users, userSearch, roleFilter, scopeFilter, statusFilter],
+  );
+  const pages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
+  const pageUsers = filteredUsers.slice((page - 1) * pageSize, page * pageSize);
+  const pageNumbers = useMemo(() => {
+    const values: (number | string)[] = [];
+    for (let number = 1; number <= pages; number++) {
+      if (number === 1 || number === pages || Math.abs(number - page) <= 1) values.push(number);
+      else if (values[values.length - 1] !== "…") values.push("…");
+    }
+    return values;
+  }, [page, pages]);
+  useEffect(() => setPage(1), [userSearch, roleFilter, scopeFilter, statusFilter, pageSize]);
+  useEffect(() => { if (page > pages) setPage(pages); }, [page, pages]);
   const fixedScope = globalAdmin ? null : currentUser.assetScope;
   const availableRoles = globalAdmin
     ? [
@@ -206,12 +234,12 @@ export default function UsersScreen({
         <article>
           <span>مديرو النظام</span>
           <strong>
-            {users.filter((x) => x.role === "مدير النظام").length}
+            {users.filter((x) => x.role === "مدير النظام" || x.role === "مدير نظام طبي" || x.role === "مدير نظام تقني").length}
           </strong>
         </article>
         <article>
           <span>الأدوار المتاحة</span>
-          <strong>5</strong>
+          <strong>{new Set(availableRoles).size}</strong>
         </article>
       </div>
       <div className="usersGrid">
@@ -408,7 +436,7 @@ export default function UsersScreen({
           )}
           {msg && <div className="formMessage">{msg}</div>}
         </form>
-        <article className="panel recordsPanel">
+        <article className="panel recordsPanel usersRecords">
           <div className="panelHead">
             <div>
               <h2>المستخدمون المسجلون</h2>
@@ -416,43 +444,24 @@ export default function UsersScreen({
             </div>
             <span className="resultPill">{users.length} مستخدم</span>
           </div>
-          <div className="userList">
-            <div className="userListHead">
-              <span></span><span>المستخدم</span><span>الدور</span><span>النطاق</span><span>الحالة</span><span>الإجراءات</span>
-            </div>
-            {users.map((u) => (
-              <div className="userRow" key={u.id}>
-                <span className="userAvatar">{u.fullName.charAt(0)}</span>
-                <div>
-                  <strong>{u.fullName}</strong>
-                  <small className="userAccount" dir="ltr">
-                    {u.username ? `${u.username} — ${u.email}` : `لم تُحدد بيانات الدخول — ${u.email}`}
-                  </small>
-                </div>
-                <span className="rolePill">{u.role}</span>
-                <span
-                  className={`typeBadge ${u.assetScope === "طبي" ? "medical" : "technical"}`}
-                >
-                  {u.assetScope === "الكل" ? "طبي وتقني" : u.assetScope}
-                </span>
-                <span className={`badge ${u.active ? "ok" : "repair"}`}>
-                  {u.active ? "نشط" : "موقوف"}
-                </span>
-                <div className="rowActions">
-                  <button onClick={() => beginEdit(u)} title="تعديل">
-                    ✎
-                  </button>
-                  <button
-                    className="deleteAction"
-                    onClick={() => remove(u)}
-                    title="حذف"
-                  >
-                    ⌫
-                  </button>
-                </div>
-              </div>
-            ))}
+          <div className="userTableTools">
+            <label className="userSearchField"><span>بحث</span><div className="search">⌕<input value={userSearch} onChange={(e) => setUserSearch(e.target.value)} placeholder="اسم المستخدم، اسم الدخول، البريد أو الدور..."/></div></label>
+            <label><span>الدور</span><SearchableSelect value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}><option>الكل</option>{[...new Set(users.map((user) => user.role))].sort((a,b)=>a.localeCompare(b,"ar")).map((value)=><option key={value}>{value}</option>)}</SearchableSelect></label>
+            <label><span>نطاق الأجهزة</span><SearchableSelect value={scopeFilter} onChange={(e) => setScopeFilter(e.target.value)}><option value="الكل">طبي وتقني</option><option value="طبي">طبي</option><option value="تقني">تقني</option></SearchableSelect></label>
+            <label><span>الحالة</span><SearchableSelect value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}><option>الكل</option><option>نشط</option><option>موقوف</option></SearchableSelect></label>
           </div>
+          <div className="tableWrap usersTableWrap"><table className="usersTable"><thead><tr><th>المستخدم</th><th>اسم الدخول</th><th>البريد الإلكتروني</th><th>الدور</th><th>النطاق</th><th>الحالة</th><th>الإجراءات</th></tr></thead><tbody>{pageUsers.map((u) => (
+            <tr key={u.id}>
+              <td><div className="userTableIdentity"><span className="userAvatar">{u.fullName.charAt(0)}</span><strong>{u.fullName}</strong></div></td>
+              <td dir="ltr">{u.username || "—"}</td>
+              <td className="userEmailCell" dir="ltr">{u.email}</td>
+              <td><span className="rolePill">{u.role}</span></td>
+              <td><span className={`typeBadge ${u.assetScope === "طبي" ? "medical" : "technical"}`}>{u.assetScope === "الكل" ? "طبي وتقني" : u.assetScope}</span></td>
+              <td><span className={`badge ${u.active ? "ok" : "repair"}`}>{u.active ? "نشط" : "موقوف"}</span></td>
+              <td><span className="rowActions"><button onClick={() => beginEdit(u)} title="تعديل المستخدم">✎</button><button className="deleteAction" onClick={() => remove(u)} title="حذف المستخدم">⌫</button></span></td>
+            </tr>
+          ))}</tbody></table>{!pageUsers.length&&<div className="emptyState"><strong>لا توجد نتائج مطابقة</strong><span>غيّري البحث أو الفلاتر.</span></div>}</div>
+          <div className="assetFoot usersFoot"><span>عرض {filteredUsers.length ? `${(page-1)*pageSize+1}–${Math.min(page*pageSize,filteredUsers.length)}` : "0"} من {filteredUsers.length}</span><label>عدد الصفوف<SearchableSelect value={pageSize} onChange={(e) => setPageSize(Number(e.target.value))}><option value="10">10</option><option value="20">20</option><option value="50">50</option></SearchableSelect></label><div className="pagination"><button disabled={page===1} onClick={()=>setPage(page-1)}>السابق</button>{pageNumbers.map((number,index)=>number==="…"?<span key={`gap-${index}`}>…</span>:<button type="button" className={page===number?"active":""} key={number} onClick={()=>setPage(Number(number))}>{number}</button>)}<button disabled={page===pages} onClick={()=>setPage(page+1)}>التالي</button></div></div>
         </article>
       </div>
     </section>
