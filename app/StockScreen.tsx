@@ -225,7 +225,7 @@ export default function StockScreen({
             sourceRow: row.sourceRow,
             productId: row.productId,
             quantity: row.quantity,
-            notes: [row.notes, importWarehouse === "مستودع المقر العام - الضفة" ? "الحالة: بانتظار فتح المعابر لإدخالها إلى غزة." : ""].filter(Boolean).join("\\n"),
+            notes: [row.notes, importWarehouse === "مستودع المقر العام - الضفة" ? "الحالة: بانتظار فتح المعابر لإدخالها إلى غزة." : ""].filter(Boolean).join("\n"),
           })),
         }),
       });
