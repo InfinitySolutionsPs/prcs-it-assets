@@ -137,3 +137,25 @@ body{font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif}
 .stockBalancesTable{min-width:720px;table-layout:fixed}.stockTableTools{grid-template-columns:minmax(240px,2fr) minmax(160px,1fr)}
 @media(max-width:1050px){.usersGrid{grid-template-columns:1fr}.userTableTools{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:720px){.usersToolbar{align-items:flex-start;flex-direction:column}.usersToolbar>.primary{width:100%}.usersGrid{grid-template-columns:minmax(0,1fr)}.usersRecords>.panelHead,.stockRecords>.panelHead{padding:14px}.userTableTools,.stockTableTools{grid-template-columns:1fr;padding:12px}.stockImportControls{grid-template-columns:1fr}.usersTable{min-width:900px}.stockImportTable{min-width:1000px}}
+
+.stockTabs{display:flex;gap:7px;padding:12px 18px 0;border-bottom:1px solid var(--line);overflow-x:auto}
+.stockTabs button{position:relative;white-space:nowrap;border:0;background:transparent;padding:11px 15px;color:var(--muted);font:600 12px inherit;cursor:pointer;border-bottom:2px solid transparent}
+.stockTabs button.active{color:var(--red);border-bottom-color:var(--red)}
+.stockTabs button b{display:inline-grid;place-items:center;min-width:18px;height:18px;margin-inline-start:7px;padding:0 5px;border-radius:12px;background:#fbe9ec;color:var(--red);font-size:10px}
+.stockTabPanel{padding:0 0 14px}.stockMovementFilters{display:grid;grid-template-columns:minmax(200px,2fr) repeat(4,minmax(130px,1fr)) auto;gap:9px;align-items:end;padding:14px 18px;background:#fafbfc;border-bottom:1px solid var(--line)}
+.stockMovementFilters>label{display:flex;flex-direction:column;gap:6px;font-size:11px;font-weight:600}
+.stockMovementFilters input,.stockMovementFilters select{min-width:0;width:100%;height:36px;border:1px solid var(--line);border-radius:8px;padding:7px 9px;background:#fff;font:12px inherit}
+.stockMovementFilters .search{display:flex;align-items:center;min-width:0}.stockMovementFilters .search input{border:0;background:transparent}
+.resetStockFilters{height:36px;border:1px solid var(--line);border-radius:8px;background:#fff;padding:0 10px;cursor:pointer}
+.stockMovementWrap{width:100%;overflow-x:auto}.stockMovementTable{min-width:1000px;table-layout:fixed}.stockMovementTable th,.stockMovementTable td{padding:11px 10px;white-space:normal;vertical-align:middle;overflow-wrap:anywhere}
+.stockMovementTable th:nth-child(1){width:17%}.stockMovementTable th:nth-child(2){width:14%}.stockMovementTable th:nth-child(3){width:10%}.stockMovementTable th:nth-child(4){width:8%}.stockMovementTable th:nth-child(5){width:16%}.stockMovementTable th:nth-child(6){width:25%}.stockMovementTable th:nth-child(7){width:10%}
+.stockImportPanel{padding:16px 18px}.stockMatchProgress{height:9px;margin:10px 0 5px;border-radius:9px;background:#eef1f3;overflow:hidden}.stockMatchProgress span{display:block;height:100%;background:#168052;transition:width .2s}
+.stockImportHint{font-size:12px;color:var(--muted);line-height:1.7;margin:8px 0 12px}
+.stockCreateMissing{display:flex;flex-direction:column;gap:6px;margin-top:7px;min-width:180px}
+.stockCreateMissing button{border:1px solid var(--line);border-radius:7px;background:#fff;color:var(--red);padding:6px 8px;font-size:10px;cursor:pointer}
+.stockCreateMissing select{min-width:180px}
+.stockImportSubmit{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0 0;padding:12px 14px;border:1px solid var(--line);border-radius:10px;background:#fafbfc}
+.stockImportSubmit>span{font-size:12px;color:var(--muted)}
+.stockImportSubmit .primary:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:1200px){.stockMovementFilters{grid-template-columns:repeat(3,minmax(0,1fr))}.stockMovementFilters>label:first-child{grid-column:span 2}}
+@media(max-width:720px){.stockTabs{padding-inline:8px}.stockTabs button{padding:10px}.stockMovementFilters{grid-template-columns:1fr;padding:12px}.stockMovementFilters>label:first-child{grid-column:auto}.stockImportPanel{padding:12px}.stockImportSubmit{align-items:stretch;flex-direction:column}.stockImportSubmit .primary{width:100%}}

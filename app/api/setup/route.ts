@@ -149,6 +149,10 @@ export async function POST(request: Request) {
           const [parent] = await db.select().from(categories).where(eq(categories.id, p.parentId)).limit(1);
           if (!parent || !canAccessAssetType(actor, parent.assetType))
             return Response.json({ error: "لا تملك صلاحية إضافة جهاز لهذا الصنف" }, { status: 403 });
+          const normalize = (value: string) => value.normalize("NFKC").toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+          const existingProducts = await db.select().from(products);
+          const existing = existingProducts.find((product) => normalize(product.name) === normalize(name));
+          if (existing) return Response.json({ item: existing, existing: true });
         }
         [row] = await db
           .insert(products)
