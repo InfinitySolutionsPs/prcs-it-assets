@@ -129,11 +129,13 @@ export async function parseMedicalStockWorkbook(file: File, products: { id: numb
     return "";
   };
   const findProduct = (name: string, preferredCategory = "") => {
-    let matches = products.filter((product) => normalized(product.name) === normalized(name));
+    const allMatches = products.filter((product) => normalized(product.name) === normalized(name));
     if (preferredCategory) {
-      matches = matches.filter((product) => normalized(product.categoryName || "") === normalized(preferredCategory));
+      const categoryMatches = allMatches.filter((product) => normalized(product.categoryName || "") === normalized(preferredCategory));
+      if (categoryMatches.length === 1) return categoryMatches[0].id;
+      if (categoryMatches.length > 1) return null;
     }
-    return matches.length === 1 ? matches[0].id : null;
+    return allMatches.length === 1 ? allMatches[0].id : null;
   };
   const sectionNames = new Set(["ophthalmicconsumables", "laboratoryequipment", "rehabilitationdept"]);
   const result: StockImportSourceRow[] = [];

@@ -149,6 +149,14 @@ export async function POST(request: Request) {
           const [parent] = await db.select().from(categories).where(eq(categories.id, p.parentId)).limit(1);
           if (!parent || !canAccessAssetType(actor, parent.assetType))
             return Response.json({ error: "لا تملك صلاحية إضافة جهاز لهذا الصنف" }, { status: 403 });
+          const normalize = (value: string) => value.normalize("NFKC").toLocaleLowerCase().replace(/[^\p{L}\p{N}]+/gu, "");
+          const [allCategories, allProducts] = await Promise.all([
+            db.select().from(categories),
+            db.select().from(products),
+          ]);
+          const accessibleCategoryIds = new Set(allCategories.filter((category) => canAccessAssetType(actor, category.assetType)).map((category) => category.id));
+          const existing = allProducts.find((product) => accessibleCategoryIds.has(product.parentId) && normalize(product.name) === normalize(name));
+          if (existing) return Response.json({ item: existing, existing: true });
         }
         [row] = await db
           .insert(products)
