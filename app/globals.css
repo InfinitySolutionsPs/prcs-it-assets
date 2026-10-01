@@ -159,3 +159,8 @@ body{font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif}
 .stockImportSubmit .primary:disabled{opacity:.55;cursor:not-allowed}
 @media(max-width:1200px){.stockMovementFilters{grid-template-columns:repeat(3,minmax(0,1fr))}.stockMovementFilters>label:first-child{grid-column:span 2}}
 @media(max-width:720px){.stockTabs{padding-inline:8px}.stockTabs button{padding:10px}.stockMovementFilters{grid-template-columns:1fr;padding:12px}.stockMovementFilters>label:first-child{grid-column:auto}.stockImportPanel{padding:12px}.stockImportSubmit{align-items:stretch;flex-direction:column}.stockImportSubmit .primary{width:100%}}
+
+
+/* Keep the selected planning device and its category visible together. */
+.planningDeviceSelect .searchableSelectButton{height:auto;min-height:48px}
+.planningDeviceSelect .searchableSelectButton>span{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.45;overflow-wrap:anywhere}
