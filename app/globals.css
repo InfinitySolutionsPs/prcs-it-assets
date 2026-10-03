@@ -164,3 +164,8 @@ body{font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif}
 /* Keep the selected planning device and its category visible together. */
 .planningDeviceSelect .searchableSelectButton{height:auto;min-height:48px}
 .planningDeviceSelect .searchableSelectButton>span{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.45;overflow-wrap:anywhere}
+
+
+/* Planning edit dialog: fit all editable fields without scrolling the page behind it. */
+.editDefinition{width:min(760px,100%);max-height:calc(100vh - 32px);overflow:auto;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}.editDefinition .modalHead,.editDefinition .modalActions{grid-column:1/-1}.editDefinition textarea{width:100%;min-height:86px;margin-top:7px;padding:10px;border:1px solid var(--line);border-radius:8px;font:12px inherit;resize:vertical}
+@media(max-width:620px){.editDefinition{grid-template-columns:1fr}.editDefinition .modalHead,.editDefinition .modalActions{grid-column:auto}}
