@@ -63,7 +63,7 @@ function makeZip(files: Array<{ name: string; content: string }>) {
   return new Blob([...localParts, ...centralParts, end], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 }
 
-function createWorkbook(title: string, columns: string[], rows: ExportCell[][]) {
+function createWorkbook(columns: string[], rows: ExportCell[][]) {
   const allRows = [columns, ...rows];
   const sheetRows = allRows.map((row, index) =>
     `<row r="${index + 1}">${row.map((value, column) => {
@@ -100,11 +100,11 @@ export default function ExportActions({ title, fileName, columns, rows }: Props)
     setBusy("excel");
     try {
       const safeName = fileName.replace(/\.xlsx?$/i, "");
-      downloadBlob(createWorkbook(title, columns, rows), `${safeName}.xlsx`);
+      downloadBlob(createWorkbook(columns, rows), `${safeName}.xlsx`);
     } finally { setBusy(null); }
   };
   const exportPdf = () => {
-    const popup = window.open("", "_blank", "noopener,noreferrer");
+    const popup = window.open("", "_blank");
     if (!popup) {
       alert("اسمح بالنوافذ المنبثقة لهذا الموقع لإعداد ملف PDF.");
       return;
