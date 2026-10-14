@@ -1,5 +1,6 @@
 "use client";
 import SearchableSelect from "./SearchableSelect";
+import ExportActions from "./ExportActions";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import AssetsScreen from "./AssetsScreen";
 import DeliveryTransferScreen from "./DeliveryTransferScreen";
@@ -795,6 +796,7 @@ function Dashboard({
                 <option key={c.id}>{c.name}</option>
               ))}
             </SearchableSelect>
+            <ExportActions title="الأصول حسب فلاتر الصفحة الرئيسية" fileName="الأصول-الرئيسية" columns={["رقم العهدة","الجهاز","الصنف","المرفق","القسم","المسؤول","الحالة"]} rows={filtered.map(a=>[a.code,a.product,a.category,a.facility,a.department,a.responsible,a.status])}/>
           </div>
         </div>
         <div className="tableWrap">
