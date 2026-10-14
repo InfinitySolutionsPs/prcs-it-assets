@@ -1,5 +1,6 @@
 "use client";
 import SearchableSelect from "./SearchableSelect";
+import ExportActions from "./ExportActions";
 import {FormEvent,useEffect,useMemo,useState} from "react";
 import {apiFetch} from "../lib/api-client";
 
@@ -84,6 +85,7 @@ export default function SetupManager({tab,setTab,facilities,departments,categori
     <button className="primary">＋ إضافة {isFacilities?"المرفق":"الصنف"}</button>
    </form>
    <ListToolbar value={masterSearch} onChange={value=>{setMasterSearch(value);setMasterPage(1)}} placeholder={isFacilities?"ابحث باسم المرفق...":"ابحث باسم الصنف..."} total={filteredMasters.length}/>
+   <div className="definitionExport"><ExportActions title={isFacilities?"المرافق حسب البحث":"الأصناف حسب البحث"} fileName={isFacilities?"المرافق":"الأصناف"} columns={isFacilities?["المرفق","عدد الأقسام"]:["الصنف","النوع","العمر الافتراضي","عدد الأجهزة"]} rows={filteredMasters.map(x=>isFacilities?[x.name,children.filter(child=>child.parentId===x.id).length]:[x.name,x.assetType||"تقني",x.usefulLifeYears||5,children.filter(child=>child.parentId===x.id).length])}/></div>
    <div className="definitionTableWrap"><table className="definitionTable"><thead><tr><th>{isFacilities?"اسم المرفق":"اسم الصنف"}</th>{!isFacilities&&<><th>النوع</th><th>العمر الافتراضي</th></>}<th>{isFacilities?"عدد الأقسام":"عدد الأجهزة"}</th><th>الإجراءات</th></tr></thead><tbody>{visibleMasters.map(x=><tr key={x.id}><td><div className="definitionTitle"><span className="listIcon">{isFacilities?"⌂":"▣"}</span><strong>{x.name}</strong></div></td>{!isFacilities&&<><td><span className={`typeBadge ${x.assetType==="طبي"?"medical":"technical"}`}>{x.assetType||"تقني"}</span></td><td>{x.usefulLifeYears||5} سنوات</td></>}<td><span className="linkedCount">{children.filter(c=>c.parentId===x.id).length}</span></td><td><RowActions onEdit={()=>setEditing({entity:masterEntity,item:x})} onDelete={()=>remove(masterEntity,x)}/></td></tr>)}</tbody></table>{!visibleMasters.length&&<div className="definitionEmpty">لا توجد نتائج مطابقة للبحث</div>}</div>
    <Pager page={masterPage} pages={masterPages} total={filteredMasters.length} pageSize={masterPageSize} onChange={setMasterPage} onPageSizeChange={size=>{setMasterPageSize(size);setMasterPage(1)}} label={isFacilities?"مرافق":"أصناف"}/>
   </article>
@@ -96,6 +98,7 @@ export default function SetupManager({tab,setTab,facilities,departments,categori
     <button className="primary">＋ إضافة {isFacilities?"القسم":"الجهاز"}</button>
    </form>
    <ListToolbar value={childSearch} onChange={value=>{setChildSearch(value);setChildPage(1)}} placeholder={isFacilities?"ابحث في الأقسام أو المرافق...":"ابحث في الأجهزة أو الأصناف..."} total={filteredChildren.length}/>
+   <div className="definitionExport"><ExportActions title={isFacilities?"الأقسام حسب البحث":"الأجهزة حسب البحث"} fileName={isFacilities?"الأقسام":"الأجهزة"} columns={isFacilities?["القسم","المرفق"]:["الجهاز","الصنف","النوع"]} rows={filteredChildren.map(x=>isFacilities?[x.name,masters.find(p=>p.id===x.parentId)?.name||"—"]:[x.name,masters.find(p=>p.id===x.parentId)?.name||"—",masters.find(p=>p.id===x.parentId)?.assetType||"تقني"])}/></div>
    <div className="definitionTableWrap"><table className="definitionTable childDefinitionTable"><thead><tr><th>{isFacilities?"اسم القسم":"اسم الجهاز أو الموديل"}</th><th>{isFacilities?"المرفق التابع له":"الصنف التابع له"}</th><th>الإجراءات</th></tr></thead><tbody>{visibleChildren.map(x=><tr key={x.id}><td><strong className="deviceName">{x.name}</strong></td><td><span className="parentChip">{masters.find(p=>p.id===x.parentId)?.name||"—"}</span></td><td><RowActions onEdit={()=>setEditing({entity:childEntity,item:x})} onDelete={()=>remove(childEntity,x)}/></td></tr>)}</tbody></table>{!visibleChildren.length&&<div className="definitionEmpty">لا توجد نتائج مطابقة للبحث</div>}</div>
    <Pager page={childPage} pages={childPages} total={filteredChildren.length} pageSize={childPageSize} onChange={setChildPage} onPageSizeChange={size=>{setChildPageSize(size);setChildPage(1)}} label={isFacilities?"أقسام":"أجهزة"}/>
   </article>

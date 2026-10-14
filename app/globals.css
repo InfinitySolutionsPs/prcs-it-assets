@@ -174,3 +174,16 @@ body{font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif}
 /* Device-level planning overview and dedicated allocation details view. */
 .planningDeviceSummaryTable{min-width:980px}.planningDeviceLink{display:flex;flex-direction:column;align-items:flex-start;gap:5px;padding:0;border:0;background:transparent;color:#142b49;font:700 12px inherit;text-align:right;cursor:pointer;line-height:1.5}.planningDeviceLink:hover{color:var(--red);text-decoration:underline}.planningDeviceLink span{font-size:10px;font-weight:600;color:var(--red)}.planningDetailHeader{display:flex;align-items:flex-start;gap:22px;padding:18px 20px}.planningDetailHeader>div{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0}.planningDetailHeader h2{margin:0;font-size:20px;overflow-wrap:anywhere}.planningDetailHeader p{margin:0;color:var(--muted);font-size:12px}.planningBackButton{flex:0 0 auto;border:1px solid var(--line);border-radius:8px;background:#fff;color:#52606d;padding:9px 12px;font:600 11px inherit;cursor:pointer}.planningBackButton:hover{border-color:#d6a0a8;color:var(--red)}.planningDeviceDetails .planningNeedTable{min-width:1040px}
 @media(max-width:720px){.planningDetailHeader{flex-direction:column;gap:14px;padding:15px}.planningBackButton{width:100%}.planningDeviceSummaryTable{min-width:980px}}
+
+
+.exportActions{display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.exportActions button{border:1px solid var(--line,#dce2e8);background:#fff;color:#263746;border-radius:8px;padding:8px 12px;font:600 12px inherit;cursor:pointer;white-space:nowrap}
+.exportActions button:hover{border-color:var(--red,#a50f22);color:var(--red,#a50f22)}
+.exportActions button:disabled{opacity:.6;cursor:wait}
+.exportHeadActions{display:flex;align-items:center;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.definitionExport{display:flex;justify-content:flex-end;margin:8px 0}
+.stockExportActions{margin:0 0 10px}
+.planningExportHead{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:14px 16px;border-bottom:1px solid var(--line,#e5e9ee)}
+.planningExportHead h2{margin:0 0 4px;font-size:16px}
+.planningExportHead p{margin:0;color:var(--muted,#6c7783);font-size:12px}
+@media(max-width:700px){.exportHeadActions{justify-content:flex-start}.planningExportHead{align-items:flex-start;flex-direction:column}.exportActions button{padding:7px 9px}}

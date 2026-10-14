@@ -1,5 +1,6 @@
 "use client";
 import SearchableSelect from "./SearchableSelect";
+import ExportActions from "./ExportActions";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../lib/api-client";
 
@@ -442,7 +443,7 @@ export default function UsersScreen({
               <h2>المستخدمون المسجلون</h2>
               <p>إدارة الأدوار وحالة الحساب</p>
             </div>
-            <span className="resultPill">{users.length} مستخدم</span>
+            <div className="exportHeadActions"><ExportActions title="المستخدمون حسب الفلاتر" fileName="المستخدمون" columns={["الاسم","اسم الدخول","البريد الإلكتروني","الدور","النطاق","الحالة"]} rows={filteredUsers.map(u=>[u.fullName,u.username||"",u.email,u.role,u.assetScope==="الكل"?"طبي وتقني":u.assetScope,u.active?"نشط":"موقوف"])}/><span className="resultPill">{filteredUsers.length} نتيجة</span></div>
           </div>
           <div className="userTableTools">
             <label className="userSearchField"><span>بحث</span><div className="search">⌕<input value={userSearch} onChange={(e) => setUserSearch(e.target.value)} placeholder="اسم المستخدم، اسم الدخول، البريد أو الدور..."/></div></label>
