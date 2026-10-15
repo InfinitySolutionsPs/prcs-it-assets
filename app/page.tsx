@@ -418,9 +418,9 @@ export default function Home() {
                 </div>
               )}
             </div>
-            {allowed("assets") && (
+            {active === "الأصول والعهد" && allowed("assets") && (
               <button className="primary" onClick={() => setOpen(true)}>
-                ＋ إضافة عهدة جديدة
+                ＋ إضافة عهدة
               </button>
             )}
           </div>

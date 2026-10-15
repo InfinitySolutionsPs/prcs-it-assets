@@ -66,6 +66,7 @@ export default function StockScreen({
   const [message, setMessage] = useState("");
   const [categoryId, setCategoryId] = useState(categories[0]?.id || 0);
   const [activeTab, setActiveTab] = useState<"balances" | "movements" | "import">("balances");
+  const [addOpen, setAddOpen] = useState(false);
 
   const [balanceWarehouse, setBalanceWarehouse] = useState("الكل");
   const [balanceSearch, setBalanceSearch] = useState("");
@@ -261,8 +262,10 @@ export default function StockScreen({
         notes: values.get("notes"),
       });
       setRows((current) => [data.transaction, ...current]);
-      setMessage("تم حفظ الحركة وربطها بالجهاز المسجل");
+      setMessage("");
       form.reset();
+      setAddOpen(false);
+      setActiveTab("movements");
     } catch (error) {
       setMessage(error instanceof Error ? error.message : "تعذر حفظ الحركة");
     }
@@ -281,25 +284,8 @@ export default function StockScreen({
         <article><span>حركات المخزون</span><strong>{rows.length}</strong></article>
       </div>
       <div className="operationGrid">
-        <form className="panel operationForm" onSubmit={submit}>
-          <div className="panelHead"><div><h2>إضافة حركة مخزون</h2><p>اختاري الجهاز المسجل والمستودع الفعلي</p></div><span className="moveIcon">＋</span></div>
-          <div className="opTwo">
-            <label>الصنف<SearchableSelect value={categoryId} onChange={(event) => setCategoryId(Number(event.target.value))}>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</SearchableSelect></label>
-            <label>الجهاز المسجل<SearchableSelect name="product" required>{catalogProducts.filter((item) => item.parentId === categoryId).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</SearchableSelect></label>
-          </div>
-          <div className="opTwo">
-            <label>نوع الحركة<SearchableSelect name="transactionType"><option>وارد</option><option>صادر</option></SearchableSelect></label>
-            <label>الكمية<input name="quantity" type="number" min="1" step="1" required /></label>
-          </div>
-          <label>المستودع<SearchableSelect name="facility" required>{STOCK_WAREHOUSES.map((name) => <option key={name}>{name}</option>)}</SearchableSelect></label>
-          <label>رقم المرجع<input name="reference" placeholder="رقم فاتورة أو محضر استلام" /></label>
-          <label>ملاحظات الاستلام<textarea name="notes" placeholder="العلامة التجارية، الطراز، الرقم التسلسلي أو تفاصيل الملحقات. للمقر العام: بانتظار فتح المعابر لإدخالها إلى غزة." /></label>
-          {message && <div className="formMessage">{message}</div>}
-          <button className="primary">حفظ الحركة</button>
-        </form>
-
         <article className="panel recordsPanel stockRecords">
-          <div className="panelHead"><div><h2>المخزون</h2><p>استعراض الأرصدة وحركات الأجهزة وإدخال ملف المقر العام</p></div><span className="resultPill">{activeTab === "balances" ? filteredBalances.length : activeTab === "movements" ? filteredMovements.length : importRows.length} سجل</span></div>
+          <div className="panelHead"><div><h2>المخزون</h2><p>استعراض الأرصدة وحركات الأجهزة وإدخال ملف المقر العام</p></div><div className="stockHeaderActions"><button type="button" className="primary" onClick={() => { setMessage(""); setAddOpen(true); }}>＋ إضافة حركة مخزون</button><span className="resultPill">{activeTab === "balances" ? filteredBalances.length : activeTab === "movements" ? filteredMovements.length : importRows.length} سجل</span></div></div>
           <div className="stockTabs" role="tablist" aria-label="أقسام المخزون">
             <button type="button" role="tab" aria-selected={activeTab === "balances"} className={activeTab === "balances" ? "active" : ""} onClick={() => setActiveTab("balances")}>أرصدة الأجهزة</button>
             <button type="button" role="tab" aria-selected={activeTab === "movements"} className={activeTab === "movements" ? "active" : ""} onClick={() => setActiveTab("movements")}>حركات المخزون</button>
@@ -369,6 +355,22 @@ export default function StockScreen({
           </div>}
         </article>
       </div>
+      {addOpen && <div className="overlay" onMouseDown={() => setAddOpen(false)}><form className="modal operationForm stockMovementModal" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()}>
+          <div className="modalHead"><div><h2>إضافة حركة مخزون</h2><p>اختاري الجهاز المسجل والمستودع الفعلي</p></div><button type="button" onClick={() => setAddOpen(false)}>×</button></div>
+          <div className="opTwo">
+            <label>الصنف<SearchableSelect value={categoryId} onChange={(event) => setCategoryId(Number(event.target.value))}>{categories.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</SearchableSelect></label>
+            <label>الجهاز المسجل<SearchableSelect name="product" required>{catalogProducts.filter((item) => item.parentId === categoryId).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</SearchableSelect></label>
+          </div>
+          <div className="opTwo">
+            <label>نوع الحركة<SearchableSelect name="transactionType"><option>وارد</option><option>صادر</option></SearchableSelect></label>
+            <label>الكمية<input name="quantity" type="number" min="1" step="1" required /></label>
+          </div>
+          <label>المستودع<SearchableSelect name="facility" required>{STOCK_WAREHOUSES.map((name) => <option key={name}>{name}</option>)}</SearchableSelect></label>
+          <label>رقم المرجع<input name="reference" placeholder="رقم فاتورة أو محضر استلام" /></label>
+          <label>ملاحظات الاستلام<textarea name="notes" placeholder="العلامة التجارية، الطراز، الرقم التسلسلي أو تفاصيل الملحقات. للمقر العام: بانتظار فتح المعابر لإدخالها إلى غزة." /></label>
+          {message && <div className="formMessage">{message}</div>}
+          <button className="primary">حفظ الحركة</button>
+        </form></div>}
     </section>
   );
 }
