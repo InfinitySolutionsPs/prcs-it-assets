@@ -852,7 +852,7 @@ function Dashboard({
           <label>
             عدد الأجهزة في الصفحة
             <SearchableSelect
-              value={pageSize}
+              searchable={false} value={pageSize}
               onChange={(e) => setPageSize(Number(e.target.value))}
             >
               <option value="10">10</option>
