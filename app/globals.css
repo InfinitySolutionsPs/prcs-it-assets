@@ -187,3 +187,14 @@ body{font-family:"IBM Plex Sans Arabic",Tahoma,Arial,sans-serif}
 .planningExportHead h2{margin:0 0 4px;font-size:16px}
 .planningExportHead p{margin:0;color:var(--muted,#6c7783);font-size:12px}
 @media(max-width:700px){.exportHeadActions{justify-content:flex-start}.planningExportHead{align-items:flex-start;flex-direction:column}.exportActions button{padding:7px 9px}}
+
+
+/* Pagination controls and dropdown menus share a consistent, viewport-safe layout. */
+.searchableSelectMenu{display:flex;flex-direction:column;overflow:hidden;max-height:calc(100vh - 16px)}
+.searchableSelectOptions{flex:0 1 auto;min-height:0}
+.searchableSelectMenu.compact{padding:6px}
+.searchableSelectMenu.compact .searchableSelectOptions{max-height:100%;gap:2px}
+.searchableSelectMenu.compact .searchableSelectOptions>button{min-height:36px;padding:8px 10px}
+.assetFoot>label,.planningPager>label,.reportPager>label,.dashboardPager>label,.definitionPager>label,.usersFoot>label,.stockFoot>label{display:flex;align-items:center;gap:8px;white-space:nowrap}
+.assetFoot>label .searchableSelect,.planningPager>label .searchableSelect,.reportPager>label .searchableSelect,.dashboardPager>label .searchableSelect,.definitionPager>label .searchableSelect,.usersFoot>label .searchableSelect,.stockFoot>label .searchableSelect{width:88px;flex:0 0 88px}
+@media(max-width:720px){.assetFoot>label,.planningPager>label,.reportPager>label,.dashboardPager>label,.definitionPager>label,.usersFoot>label,.stockFoot>label{gap:7px}.assetFoot>label .searchableSelect,.planningPager>label .searchableSelect,.reportPager>label .searchableSelect,.dashboardPager>label .searchableSelect,.definitionPager>label .searchableSelect,.usersFoot>label .searchableSelect,.stockFoot>label .searchableSelect{width:82px;flex-basis:82px}}
