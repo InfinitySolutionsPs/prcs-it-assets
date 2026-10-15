@@ -61,7 +61,7 @@ export default function SearchableSelect({children,name,value,defaultValue,onCha
    const left=Math.max(viewportPadding,Math.min(rect.left,window.innerWidth-menuWidth-viewportPadding));
    const visibleRows=Math.min(Math.max(filtered.length,1),7);
    const searchHeight=searchable?48:0;
-   const desiredHeight=Math.min(360,16+searchHeight+visibleRows*39);
+   const desiredHeight=Math.min(360,16+searchHeight+visibleRows*36);
    const spaceBelow=Math.max(0,window.innerHeight-rect.bottom-viewportPadding);
    const spaceAbove=Math.max(0,rect.top-viewportPadding);
    const opensAbove=spaceBelow<desiredHeight&&spaceAbove>spaceBelow;
