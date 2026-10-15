@@ -86,7 +86,15 @@ function createWorkbook(columns: string[], rows: ExportCell[][]) {
       return `<c r="${cell}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(value)}</t></is></c>`;
     }).join("")}</row>`,
   ).join("");
-  const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows}</sheetData></worksheet>`;
+  const columnWidths = columns.map((header, columnIndex) => {
+    const values = rows.map((row) => String(row[columnIndex] ?? ""));
+    const longest = Math.max(header.length, ...values.map((value) => value.length));
+    return Math.max(12, Math.min(42, Math.ceil(longest * 1.35)));
+  });
+  const columnDefinitions = columnWidths.map((width, index) =>
+    `<col min="${index + 1}" max="${index + 1}" width="${width}" customWidth="1"/>`,
+  ).join("");
+  const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><cols>${columnDefinitions}</cols><sheetData>${sheetRows}</sheetData></worksheet>`;
   const safeSheet = "النتائج";
   const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${safeSheet}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
   const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`;
@@ -126,8 +134,17 @@ export default function ExportActions({ title, fileName, columns, rows }: Props)
     setBusy("pdf");
     const head = columns.map(column => `<th>${xmlEscape(column)}</th>`).join("");
     const body = rows.map(row => `<tr>${columns.map((_, index) => `<td>${xmlEscape(row[index])}</td>`).join("")}</tr>`).join("");
+    const columnWeight = (column: string) => {
+      if (/جهاز|ملاحظات|تفاصيل|المواصفات|البيانات/.test(column)) return 2.1;
+      if (/الصنف|المرفق|القسم|المسؤول|البريد/.test(column)) return 1.4;
+      if (/تاريخ/.test(column)) return 1.3;
+      if (/عدد المرافق|عدد الأقسام|إجمالي/.test(column)) return 1.35;
+      return 1;
+    };
+    const totalWeight = columns.reduce((total, column) => total + columnWeight(column), 0);
+    const colgroup = columns.map(column => `<col style="width:${(columnWeight(column) / totalWeight * 100).toFixed(2)}%">`).join("");
     popup.document.open();
-    popup.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${xmlEscape(title)}</title><style>@page{size:A4 landscape;margin:12mm}body{font-family:Arial,Tahoma,sans-serif;color:#17202a}h1{font-size:18px;margin:0 0 8px}p{color:#657383;font-size:11px;margin:0 0 14px}.meta{margin-bottom:12px;font-size:11px}table{width:100%;border-collapse:collapse;font-size:10px}th,td{border:1px solid #ccd3da;padding:6px;text-align:right;vertical-align:top;overflow-wrap:anywhere}th{background:#eef2f5}tr{page-break-inside:avoid}thead{display:table-header-group}</style></head><body><h1>${xmlEscape(title)}</h1><p>تاريخ التصدير: ${new Date().toLocaleString("ar-PS")} — عدد النتائج: ${rows.length}</p><table><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table><script>window.onload=()=>setTimeout(()=>window.print(),250);window.onafterprint=()=>window.close();</script></body></html>`);
+    popup.document.write(`<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>${xmlEscape(title)}</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,Tahoma,sans-serif;color:#17202a}h1{font-size:18px;margin:0 0 8px}p{color:#657383;font-size:11px;margin:0 0 14px}.meta{margin-bottom:12px;font-size:11px}table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px}th,td{border:1px solid #ccd3da;padding:5px 4px;text-align:right;vertical-align:top}th{background:#eef2f5;white-space:nowrap;word-break:keep-all;overflow-wrap:normal;font-size:8px}td{overflow-wrap:anywhere;word-break:normal}tr{page-break-inside:avoid}thead{display:table-header-group}</style></head><body><h1>${xmlEscape(title)}</h1><p>تاريخ التصدير: ${new Date().toLocaleString("ar-PS")} — عدد النتائج: ${rows.length}</p><table><colgroup>${colgroup}</colgroup><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table><script>window.onload=()=>setTimeout(()=>window.print(),250);window.onafterprint=()=>window.close();</script></body></html>`);
     popup.document.close();
     window.setTimeout(() => setBusy(null), 1500);
   };
