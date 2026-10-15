@@ -118,7 +118,7 @@ function createWorkbook(columns: string[], rows: ExportCell[][], title: string, 
   const workbook = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${safeSheet}" sheetId="1" r:id="rId1"/></sheets></workbook>`;
   const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>`;
   const rootRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`;
-  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="4"><font><sz val="11"/><name val="Arial"/></font><font><b/><sz val="16"/><name val="Arial"/></font><font><sz val="10"/><name val="Arial"/></font><font><b/><sz val="12"/><color rgb="FFFFFFFF"/><name val="Arial"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFAC1025"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF34495E"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="3" fillId="2" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="3" fillId="3" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
+  const styles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="4"><font><sz val="11"/><name val="Arial"/></font><font><b/><sz val="16"/><name val="Arial"/></font><font><sz val="10"/><name val="Arial"/></font><font><b/><sz val="12"/><color rgb="FFFFFFFF"/><name val="Arial"/></font></fonts><fills count="4"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FFAC1025"/><bgColor indexed="64"/></patternFill></fill><fill><patternFill patternType="solid"><fgColor rgb="FF34495E"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="5"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="2" fillId="0" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center"/></xf><xf numFmtId="0" fontId="3" fillId="2" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf><xf numFmtId="0" fontId="3" fillId="3" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>`;
   const types = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>`;
   return makeZip([
     { name: "[Content_Types].xml", content: types },
@@ -139,11 +139,26 @@ const downloadBlob = (blob: Blob, name: string) => {
 
 export default function ExportActions({ title, fileName, columns, rows, sections }: Props) {
   const [busy, setBusy] = useState<"excel" | "pdf" | null>(null);
+  const reportTitle = title.replace(/\s*حسب الفلاتر/gu, "").trim();
+  const categoryIndex = columns.indexOf("الصنف");
+  const reportSections = sections ?? (categoryIndex >= 0
+    ? Array.from(new Set(rows.map(row => String(row[categoryIndex] ?? "غير مصنف"))))
+        .sort((a, b) => a.localeCompare(b))
+        .map(category => ({
+          title: category,
+          rows: rows.filter(row => String(row[categoryIndex] ?? "غير مصنف") === category)
+            .map(row => row.filter((_, index) => index !== categoryIndex)),
+        }))
+    : undefined);
+  const reportColumns = categoryIndex >= 0 && !sections
+    ? columns.filter((_, index) => index !== categoryIndex)
+    : columns;
+  const reportRows = reportSections ? [] : rows;
   const exportExcel = () => {
     setBusy("excel");
     try {
       const safeName = fileName.replace(/\.xlsx?$/i, "");
-      downloadBlob(createWorkbook(columns, rows, title, sections), `${safeName}.xlsx`);
+      downloadBlob(createWorkbook(reportColumns, reportRows, reportTitle, reportSections), `${safeName}.xlsx`);
     } finally { setBusy(null); }
   };
   const exportPdf = () => {
@@ -153,7 +168,7 @@ export default function ExportActions({ title, fileName, columns, rows, sections
       return;
     }
     setBusy("pdf");
-    const head = columns.map(column => `<th>${xmlEscape(column)}</th>`).join("");
+    const head = reportColumns.map(column => `<th>${xmlEscape(column)}</th>`).join("");
     const columnWeight = (column: string) => {
       if (/جهاز|ملاحظات|تفاصيل|المواصفات|البيانات/.test(column)) return 2.1;
       if (/الصنف|المرفق|القسم|المسؤول|البريد/.test(column)) return 1.4;
@@ -161,15 +176,15 @@ export default function ExportActions({ title, fileName, columns, rows, sections
       if (/عدد المرافق|عدد الأقسام|إجمالي/.test(column)) return 1.35;
       return 1;
     };
-    const totalWeight = columns.reduce((total, column) => total + columnWeight(column), 0);
-    const colgroup = columns.map(column => `<col style="width:${(columnWeight(column) / totalWeight * 100).toFixed(2)}%">`).join("");
-    const renderTable = (tableRows: ExportCell[][]) => `<table><colgroup>${colgroup}</colgroup><thead><tr>${head}</tr></thead><tbody>${tableRows.map(row => `<tr>${columns.map((_, index) => `<td>${xmlEscape(row[index])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
-    const body = sections?.length
-      ? sections.map(section => `<section><h2>${xmlEscape(section.title)}</h2>${renderTable(section.rows)}</section>`).join("")
-      : renderTable(rows);
+    const totalWeight = reportColumns.reduce((total, column) => total + columnWeight(column), 0);
+    const colgroup = reportColumns.map(column => `<col style="width:${(columnWeight(column) / totalWeight * 100).toFixed(2)}%">`).join("");
+    const renderTable = (tableRows: ExportCell[][]) => `<table><colgroup>${colgroup}</colgroup><thead><tr>${head}</tr></thead><tbody>${tableRows.map(row => `<tr>${reportColumns.map((_, index) => `<td>${xmlEscape(row[index])}</td>`).join("")}</tr>`).join("")}</tbody></table>`;
+    const body = reportSections?.length
+      ? reportSections.map(section => `<section><h2>${xmlEscape(section.title)}</h2>${renderTable(section.rows)}</section>`).join("")
+      : renderTable(reportRows);
     const exportDate = new Date().toLocaleDateString("ar-PS");
     popup.document.open();
-    popup.document.write(`<!doctype html><html lang="ar" dir="ltr"><head><meta charset="utf-8"><title>${xmlEscape(title)}</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,Tahoma,sans-serif;color:#17202a;direction:ltr;text-align:left}h1{font-size:18px;text-align:center;direction:rtl;margin:0 0 3px}.exportDate{color:#657383;font-size:11px;text-align:center;direction:ltr;margin:0 0 14px}section{page-break-inside:avoid;margin:0 0 16px}h2{font-size:14px;margin:12px 0 6px;padding:7px 9px;background:#fbe9ec;border-right:4px solid #ac1025;color:#8f1021;direction:rtl;text-align:right}table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;direction:ltr}th,td{border:1px solid #ccd3da;padding:5px 4px;text-align:left;vertical-align:top}th{background:#eef2f5;white-space:normal;overflow-wrap:anywhere;font-size:8px}td{overflow-wrap:anywhere;word-break:normal}tr{page-break-inside:avoid}thead{display:table-header-group}</style></head><body><h1>${xmlEscape(title)}</h1><p class="exportDate">${exportDate}</p>${body}<script>window.onload=()=>setTimeout(()=>window.print(),250);window.onafterprint=()=>window.close();</script></body></html>`);
+    popup.document.write(`<!doctype html><html lang="ar" dir="ltr"><head><meta charset="utf-8"><title>${xmlEscape(reportTitle)}</title><style>@page{size:A4 landscape;margin:8mm}body{font-family:Arial,Tahoma,sans-serif;color:#17202a;direction:ltr;text-align:left}h1{font-size:18px;text-align:center;direction:rtl;margin:0 0 3px}.exportDate{color:#657383;font-size:11px;text-align:center;direction:ltr;margin:0 0 14px}section{page-break-inside:avoid;margin:0 0 16px}h2{font-size:14px;margin:12px 0 6px;padding:7px 9px;background:#fbe9ec;border-right:4px solid #ac1025;color:#8f1021;direction:rtl;text-align:left}table{width:100%;border-collapse:collapse;table-layout:fixed;font-size:9px;direction:ltr}th,td{border:1px solid #ccd3da;padding:5px 4px;text-align:left;vertical-align:top}th{background:#eef2f5;white-space:normal;overflow-wrap:anywhere;font-size:8px}td{overflow-wrap:anywhere;word-break:normal}tr{page-break-inside:avoid}thead{display:table-header-group}</style></head><body><h1>${xmlEscape(reportTitle)}</h1><p class="exportDate">${exportDate}</p>${body}<script>window.onload=()=>setTimeout(()=>window.print(),250);window.onafterprint=()=>window.close();</script></body></html>`);
     popup.document.close();
     window.setTimeout(() => setBusy(null), 1500);
   };
