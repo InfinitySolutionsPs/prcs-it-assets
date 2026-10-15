@@ -60,14 +60,28 @@ function makeZip(files: Array<{ name: string; content: string }>) {
   u32(ev, 0, 0x06054b50); u16(ev, 4, 0); u16(ev, 6, 0);
   u16(ev, 8, files.length); u16(ev, 10, files.length); u32(ev, 12, centralSize);
   u32(ev, 16, offset); u16(ev, 20, 0);
-  return new Blob([...localParts, ...centralParts, end], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+  const archiveBuffer = new ArrayBuffer(offset + centralSize + end.length);
+  const archive = new Uint8Array(archiveBuffer);
+  let cursor = 0;
+  for (const part of [...localParts, ...centralParts, end]) {
+    archive.set(part, cursor);
+    cursor += part.length;
+  }
+  return new Blob([archiveBuffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
 }
 
 function createWorkbook(columns: string[], rows: ExportCell[][]) {
   const allRows = [columns, ...rows];
   const sheetRows = allRows.map((row, index) =>
     `<row r="${index + 1}">${row.map((value, column) => {
-      const cell = String.fromCharCode(65 + (column % 26)) + (index + 1);
+      let columnNumber = column + 1;
+      let columnName = "";
+      while (columnNumber > 0) {
+        const remainder = (columnNumber - 1) % 26;
+        columnName = String.fromCharCode(65 + remainder) + columnName;
+        columnNumber = Math.floor((columnNumber - 1) / 26);
+      }
+      const cell = columnName + (index + 1);
       if (typeof value === "number" && Number.isFinite(value)) return `<c r="${cell}" t="n"><v>${value}</v></c>`;
       return `<c r="${cell}" t="inlineStr"><is><t xml:space="preserve">${xmlEscape(value)}</t></is></c>`;
     }).join("")}</row>`,
